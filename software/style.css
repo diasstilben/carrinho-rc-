@@ -1,5 +1,13 @@
 body {
-    background-color: #1a1a2e;
+    /* Fundo futurista: Gradiente escuro com uma malha de grade (grid) sutil por cima */
+    background-color: #0f0f1a;
+    background-image: 
+        linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%),
+        radial-gradient(circle at 50% 20%, rgba(79, 172, 254, 0.08) 0%, transparent 50%),
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px; /* Tamanho da malha da grade */
+    
     color: #ffffff;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     text-align: center;
@@ -12,36 +20,44 @@ body {
     min-height: 95vh;
 }
 
-h1 { margin-bottom: 5px; color: #4facfe; letter-spacing: 2px;}
+h1 { 
+    margin-bottom: 5px; 
+    color: #4facfe; 
+    letter-spacing: 3px;
+    text-shadow: 0 0 10px rgba(79, 172, 254, 0.3);
+}
 
 .status-box {
-    background: #16213e;
+    background: rgba(22, 33, 62, 0.8);
+    backdrop-filter: blur(5px); /* Efeito vidro fosco moderno */
     padding: 8px 15px;
     border-radius: 8px;
     font-size: 14px;
-    margin-bottom: 40px;
-    border: 1px solid #0f3460;
+    margin-bottom: 30px;
+    border: 1px solid rgba(79, 172, 254, 0.2);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
 }
-.conectado { color: #00ff88; font-weight: bold; text-shadow: 0 0 5px #00ff88; }
-.desconectado { color: #ff3366; font-weight: bold; text-shadow: 0 0 5px #ff3366; }
+.conectado { color: #00ff88; font-weight: bold; text-shadow: 0 0 8px #00ff88; }
+.desconectado { color: #ff3366; font-weight: bold; text-shadow: 0 0 8px #ff3366; }
 
 .d-pad {
     display: grid;
-    grid-template-columns: repeat(3, 80px);
-    grid-template-rows: repeat(3, 80px);
+    grid-template-columns: repeat(3, 85px);
+    grid-template-rows: repeat(3, 85px);
     gap: 15px;
     justify-content: center;
 }
 
 .btn {
-    background: #16213e;
+    background: rgba(22, 33, 62, 0.9);
+    backdrop-filter: blur(5px);
     color: #4facfe;
     border: 2px solid #4facfe;
-    border-radius: 15px;
+    border-radius: 18px;
     font-size: 20px;
     font-weight: bold;
     cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
     user-select: none;
     touch-action: manipulation;
     transition: all 0.1s ease-in-out;
@@ -53,29 +69,29 @@ h1 { margin-bottom: 5px; color: #4facfe; letter-spacing: 2px;}
 
 .btn:active, .btn.pressionado {
     background: #4facfe;
-    color: #1a1a2e;
-    transform: scale(0.90);
-    box-shadow: 0 0 15px #4facfe;
+    color: #0f0f1a;
+    transform: scale(0.92);
+    box-shadow: 0 0 20px #4facfe;
 }
 
 .btn-stop {
-    background: #e94560;
+    background: rgba(233, 69, 96, 0.9);
     color: white;
     border-color: #e94560;
     border-radius: 50%;
-    font-size: 26px;
+    font-size: 28px;
 }
 .btn-stop:active, .btn-stop.pressionado {
-    background: #b03046;
-    box-shadow: 0 0 15px #e94560;
+    background: #e94560;
+    box-shadow: 0 0 20px #e94560;
 }
 
-/* Estilo do Botão da Buzina com Ícone Vetorial */
+/* Botão da Buzina */
 .buzina { 
     grid-column: 3; 
     grid-row: 1; 
-    background: #f39c12; 
-    color: #1a1a2e; 
+    background: rgba(243, 156, 18, 0.9); 
+    color: #0f0f1a; 
     border-color: #f39c12; 
 }
 .icone-buzina {
@@ -86,12 +102,12 @@ h1 { margin-bottom: 5px; color: #4facfe; letter-spacing: 2px;}
 }
 .legenda-tecla {
     font-size: 11px;
-    opacity: 0.8;
+    opacity: 0.85;
 }
 .buzina:active, .buzina.pressionado { 
-    background: #d68910; 
+    background: #f39c12; 
     color: white; 
-    box-shadow: 0 0 15px #f39c12; 
+    box-shadow: 0 0 20px #f39c12; 
 }
 
 .frente   { grid-column: 2; grid-row: 1; }
@@ -101,10 +117,11 @@ h1 { margin-bottom: 5px; color: #4facfe; letter-spacing: 2px;}
 .tras     { grid-column: 2; grid-row: 3; }
 
 footer {
-    margin-top: 40px;
+    margin-top: 30px;
     color: #8892b0;
     font-size: 13px;
-    border-top: 1px solid #0f3460;
-    padding-top: 10px;
+    border-top: 1px solid rgba(15, 52, 96, 0.5);
+    padding-top: 12px;
     width: 100%;
+    letter-spacing: 1px;
 }
