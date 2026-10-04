@@ -64,7 +64,7 @@ def frente(velocidade = 1000):
     
     IN3_DIR.value(1) 
     IN4_DIR.value(0) 
-
+# MOVER PARA TRAS
 def tras(velocidade = 1000):
 
     ENA_ESQ.duty(velocidade)
@@ -80,10 +80,61 @@ def tras(velocidade = 1000):
 
     IN1_DIR.value(0) 
     IN2_DIR.value(1) 
-    
+
     IN3_DIR.value(0) 
     IN4_DIR.value(1)
+# MOVER PARA ESQUERDA
+def esquerda(velocidade = 1000):
+    
+    ENA_ESQ.dusty(velocidade)
+    ENB_ESQ.dusty(velocidade)
+    ENA_DIR.dusty(velocidade)
+    ENB_ESQ.dusty(velocidade)
 
+    IN1_ESQ.value(0)
+    IN2_ESQ.value(1) # MOTOR DIANTEIRO ESQ EM RÉ
+    IN3_ESQ.value(0)
+    IN4_ESQ.value(1) # MOTOR TRASEIRO ESQ EM RÉ
+
+    IN1_DIR.value(1) # MOTOR DIANTEIRO DIR PARA FRENTE
+    IN2_DIR.value(0)
+    IN3_DIR.value(1) # MOTOR TRASEIRO DIR PRA FRENTE
+    IN4_DIR.value(0) 
+# MOVER PARA DIREITA
+def direita(velocidade=1000):
+   
+    ENA_ESQ.duty(velocidade)
+    ENB_ESQ.duty(velocidade)
+    ENA_DIR.duty(velocidade)
+    ENB_DIR.duty(velocidade)
+    
+    IN1_ESQ.value(1)
+    IN2_ESQ.value(0)
+    IN3_ESQ.value(1)
+    IN4_ESQ.value(0)
+    
+    
+    IN1_DIR.value(0)
+    IN2_DIR.value(1)
+    IN3_DIR.value(0)
+    IN4_DIR.value(1)
+# PARAR O RC
+def parar():
+    
+    ENA_ESQ.duty(0)
+    ENB_ESQ.duty(0)
+    ENA_DIR.duty(0)
+    ENB_DIR.duty(0)
+    
+    IN1_ESQ.value(0)
+    IN2_ESQ.value(0)
+    IN3_ESQ.value(0)
+    IN4_ESQ.value(0)
+    
+    IN1_DIR.value(0)
+    IN2_DIR.value(0)
+    IN3_DIR.value(0)
+    IN4_DIR.value(0)
 # ==================
 # 5. LOOP PRINCIPAL
 # ==================
