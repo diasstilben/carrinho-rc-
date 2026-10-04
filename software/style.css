@@ -1,0 +1,110 @@
+body {
+    background-color: #1a1a2e;
+    color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 95vh;
+}
+
+h1 { margin-bottom: 5px; color: #4facfe; letter-spacing: 2px;}
+
+.status-box {
+    background: #16213e;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 40px;
+    border: 1px solid #0f3460;
+}
+.conectado { color: #00ff88; font-weight: bold; text-shadow: 0 0 5px #00ff88; }
+.desconectado { color: #ff3366; font-weight: bold; text-shadow: 0 0 5px #ff3366; }
+
+.d-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 80px);
+    grid-template-rows: repeat(3, 80px);
+    gap: 15px;
+    justify-content: center;
+}
+
+.btn {
+    background: #16213e;
+    color: #4facfe;
+    border: 2px solid #4facfe;
+    border-radius: 15px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    user-select: none;
+    touch-action: manipulation;
+    transition: all 0.1s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn:active, .btn.pressionado {
+    background: #4facfe;
+    color: #1a1a2e;
+    transform: scale(0.90);
+    box-shadow: 0 0 15px #4facfe;
+}
+
+.btn-stop {
+    background: #e94560;
+    color: white;
+    border-color: #e94560;
+    border-radius: 50%;
+    font-size: 26px;
+}
+.btn-stop:active, .btn-stop.pressionado {
+    background: #b03046;
+    box-shadow: 0 0 15px #e94560;
+}
+
+/* Estilo do Botão da Buzina com Ícone Vetorial */
+.buzina { 
+    grid-column: 3; 
+    grid-row: 1; 
+    background: #f39c12; 
+    color: #1a1a2e; 
+    border-color: #f39c12; 
+}
+.icone-buzina {
+    width: 28px;
+    height: 28px;
+    fill: currentColor;
+    margin-bottom: 2px;
+}
+.legenda-tecla {
+    font-size: 11px;
+    opacity: 0.8;
+}
+.buzina:active, .buzina.pressionado { 
+    background: #d68910; 
+    color: white; 
+    box-shadow: 0 0 15px #f39c12; 
+}
+
+.frente   { grid-column: 2; grid-row: 1; }
+.esquerda { grid-column: 1; grid-row: 2; }
+.parar    { grid-column: 2; grid-row: 2; }
+.direita  { grid-column: 3; grid-row: 2; }
+.tras     { grid-column: 2; grid-row: 3; }
+
+footer {
+    margin-top: 40px;
+    color: #8892b0;
+    font-size: 13px;
+    border-top: 1px solid #0f3460;
+    padding-top: 10px;
+    width: 100%;
+}

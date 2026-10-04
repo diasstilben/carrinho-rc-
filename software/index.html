@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Astro - Painel de Controle</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Astro 4WD</h1>
+        <div class="status-box">
+            Status da Conexão: <span id="status-texto" class="desconectado">Buscando Astro...</span>
+        </div>
+    </header>
+
+    <main class="d-pad">
+        <div class="btn frente" id="btn-F" onmousedown="comando('F')" onmouseup="comando('S')" ontouchstart="comando('F')" ontouchend="comando('S')">W / ▲</div>
+        
+        <div class="btn esquerda" id="btn-L" onmousedown="comando('L')" onmouseup="comando('S')" ontouchstart="comando('L')" ontouchend="comando('S')">A / ◀</div>
+        
+        <!-- Barra de espaço aciona o Parar central -->
+        <div class="btn btn-stop parar" id="btn-S" onmousedown="comando('S')" ontouchstart="comando('S')">🛑</div>
+        
+        <div class="btn direita" id="btn-R" onmousedown="comando('R')" onmouseup="comando('S')" ontouchstart="comando('R')" ontouchend="comando('S')">D / ▶</div>
+        
+        <div class="btn tras" id="btn-B" onmousedown="comando('B')" onmouseup="comando('S')" ontouchstart="comando('B')" ontouchend="comando('S')">S / ▼</div>
+
+        <!-- Botão da Buzina (Tecla F / Ícone Vetorial Elegante) -->
+        <div class="btn buzina" id="btn-H" onmousedown="comando('H')" onmouseup="comando('Q')" ontouchstart="comando('H')" ontouchend="comando('Q')">
+            <svg class="icone-buzina" viewBox="0 0 24 24">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </svg>
+            <span class="legenda-tecla">F</span>
+        </div>
+    </main>
+
+    <footer>
+        <p>Projeto Astro - Desenvolvido por <strong>João Dias Stilben Teixeira</strong></p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

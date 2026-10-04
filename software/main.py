@@ -1,5 +1,8 @@
 from machine import Pin, PWM 
 import time
+import network
+import socket
+
 # ==================================================
 #  1. DEFINIÇÃO DOS PINOS - MOTORES (LADO ESQUERDO)
 # ==================================================
@@ -135,6 +138,11 @@ def parar():
     IN2_DIR.value(0)
     IN3_DIR.value(0)
     IN4_DIR.value(0)
+
+# =============================
+# CONFIGURAÇÃO DA REDE DE WIFI
+# =============================
+
 # ==================
-# 5. LOOP PRINCIPAL
+# . LOOP PRINCIPAL
 # ==================
