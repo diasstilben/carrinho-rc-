@@ -5,8 +5,8 @@
 // ==========================================
 // 1. CONFIGURAÇÃO DA REDE WI-FI (Access Point)
 // ==========================================
-const char* ssid = "Carrinho_Robo";
-const char* password = "senha_segura123";
+const char* ssid = "Astro_Rc";
+const char* password = "dias";
 
 // Inicia o servidor web na porta padrão HTTP (80)
 WebServer server(80);
