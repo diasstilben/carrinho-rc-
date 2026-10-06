@@ -57,13 +57,16 @@ Repositório dedicado ao desenvolvimento do hardware, esquemas elétricos e cód
 ## 📁 Estrutura do Repositório
 
 ```text
-carrinho-rc-/
-│
+carrinho-rc/
+├── README.md                           # Documentação geral do projeto
 ├── hardware/
 │   ├── cad/
-│   │   └── CONEXÃO DO CARRINHO RC.fzz
+│   │   └── CONEXÃO DO CARRINHO RC.fzz  # Esquema elétrico e de montagem (Fritzing)
 │   └── fotos/
-│
-├── software/
-│
-└── README.md
+│       └── carcaça do astro com motores.jpeg # Registros físicos da montagem
+└── software/
+    ├── software.ino                    # Código principal em C++ 
+    └── data/                           # Pasta obrigatória para o LittleFS
+        ├── index.html                  # Estrutura do painel de controle
+        ├── style.css                   # Estilização visual
+        └── script.js                   # Lógica de controle, leitura do teclado e requisições HTTP
