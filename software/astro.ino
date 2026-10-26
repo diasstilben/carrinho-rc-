@@ -12,23 +12,17 @@ const char* password = "dias";
 WebServer server(80);
 
 // ==========================================
-// 2. CONFIGURAÇÃO DOS PINOS E MOTORES
+// 2. CONFIGURAÇÃO DOS PINOS E MOTORES (UMA PONTE H)
 // ==========================================
-// Motores Lado Esquerdo
-const int ENA_ESQ = 13;
-const int IN1_ESQ = 14;
-const int IN2_ESQ = 27;
-const int IN3_ESQ = 26;
-const int IN4_ESQ = 25;
-const int ENB_ESQ = 33;
+// Canal A (Motores do Lado Esquerdo)
+const int ENA = 13;
+const int IN1 = 14;
+const int IN2 = 27;
 
-// Motores Lado Direito
-const int ENA_DIR = 32;
-const int IN1_DIR = 22;
-const int IN2_DIR = 19;
-const int IN3_DIR = 18;
-const int IN4_DIR = 16;
-const int ENB_DIR = 17;
+// Canal B (Motores do Lado Direito)
+const int IN3 = 26;
+const int IN4 = 25;
+const int ENB = 33;
 
 // Pino da Buzina
 const int BUZINA_PIN = 23;
@@ -36,6 +30,7 @@ const int BUZINA_PIN = 23;
 // Pinos do Sensor
 const int TRIG_PIN = 4;
 const int ECHO_PIN = 35; 
+
 // Variáveis para o controle do sensor de ré 
 bool emRe = false;
 bool buzinaReAtiva = false;
@@ -47,51 +42,42 @@ void parar();
 
 void configurarPinos() {
     // Configura os pinos de direção como SAÍDA
-    pinMode(IN1_ESQ, OUTPUT); pinMode(IN2_ESQ, OUTPUT);
-    pinMode(IN3_ESQ, OUTPUT); pinMode(IN4_ESQ, OUTPUT);
-    pinMode(IN1_DIR, OUTPUT); pinMode(IN2_DIR, OUTPUT);
-    pinMode(IN3_DIR, OUTPUT); pinMode(IN4_DIR, OUTPUT);
+    pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
+    pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
     
     // Configura buzina e garante que comece desligada
     pinMode(BUZINA_PIN, OUTPUT);
     digitalWrite(BUZINA_PIN, LOW);
 
-    // Configura os pinos do Sensor Ultrassônico (CORRIGIDO: Faltava configurar)
+    // Configura os pinos do Sensor Ultrassônico
     pinMode(TRIG_PIN, OUTPUT);
     pinMode(ECHO_PIN, INPUT);
 
     // Configura o PWM para o controle de velocidade (1000 Hz, 10 bits = 0 a 1023)
-    ledcAttach(ENA_ESQ, 1000, 10);
-    ledcAttach(ENB_ESQ, 1000, 10);
-    ledcAttach(ENA_DIR, 1000, 10);
-    ledcAttach(ENB_DIR, 1000, 10);
+    ledcAttach(ENA, 1000, 10);
+    ledcAttach(ENB, 1000, 10);
     
     parar(); // Garante que o robô inicie parado
 }
 
-// Função base para acionar as pontes H
-void moverMotores(int v1_esq, int v2_esq, int v3_esq, int v4_esq, 
-                  int v1_dir, int v2_dir, int v3_dir, int v4_dir, int val_pwm) {
-    digitalWrite(IN1_ESQ, v1_esq); digitalWrite(IN2_ESQ, v2_esq);
-    digitalWrite(IN3_ESQ, v3_esq); digitalWrite(IN4_ESQ, v4_esq);
-    
-    digitalWrite(IN1_DIR, v1_dir); digitalWrite(IN2_DIR, v2_dir);
-    digitalWrite(IN3_DIR, v3_dir); digitalWrite(IN4_DIR, v4_dir);
+// Função base para acionar a ponte H (Adaptada para 1 Ponte H)
+void moverMotores(int v1, int v2, int v3, int v4, int val_pwm) {
+    digitalWrite(IN1, v1); digitalWrite(IN2, v2);
+    digitalWrite(IN3, v3); digitalWrite(IN4, v4);
 
-    // Aplica a velocidade (PWM)
-    ledcWrite(ENA_ESQ, val_pwm); ledcWrite(ENB_ESQ, val_pwm);
-    ledcWrite(ENA_DIR, val_pwm); ledcWrite(ENB_DIR, val_pwm);
+    // Aplica a velocidade (PWM) em ambos os lados
+    ledcWrite(ENA, val_pwm); ledcWrite(ENB, val_pwm);
 }
 
 // Comandos de Movimento
-void parar()    { moverMotores(0,0,0,0, 0,0,0,0, 0); }
-void frente()   { moverMotores(1,0,1,0, 1,0,1,0, 1023); }
-void tras()     { moverMotores(0,1,0,1, 0,1,0,1, 1023); }
-void esquerda() { moverMotores(0,1,0,1, 1,0,1,0, 1023); } 
-void direita()  { moverMotores(1,0,1,0, 0,1,0,1, 1023); }
+void parar()    { moverMotores(0, 0, 0, 0, 0); }
+void frente()   { moverMotores(1, 0, 1, 0, 1023); }
+void tras()     { moverMotores(0, 1, 0, 1, 1023); }
+void esquerda() { moverMotores(0, 1, 1, 0, 1023); } 
+void direita()  { moverMotores(1, 0, 0, 1, 1023); }
 
 // ==========================================
-// 3. SERVIDOR DE ARQUIVOS (LittleFS)
+// 3. SERVIDOR DE ARQUIVOS (LittleFS) E SENSOR
 // ==========================================
 void enviarArquivo(String caminho, String tipoConteudo) {
     if (LittleFS.exists(caminho)) {
