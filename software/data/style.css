@@ -1,15 +1,34 @@
+/* =====================================================
+   ASTRO 4WD - HUD CYBERPUNK / MECHA
+   ===================================================== */
+:root {
+    --bg-0: #05070d;
+    --bg-1: #0a1018;
+    --metal: #121b27;
+    --metal-2: #1b2735;
+    --cyan: #00e5ff;
+    --cyan-dim: rgba(0, 229, 255, 0.35);
+    --lime: #b6ff00;
+    --red: #ff2a4d;
+    --orange: #ff8a00;
+    --font-titulo: 'Orbitron', 'Eurostile', 'Bank Gothic', 'Segoe UI', sans-serif;
+    --font-texto: 'Rajdhani', 'Segoe UI', Tahoma, sans-serif;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
 body {
-    /* Fundo futurista: Gradiente escuro com uma malha de grade (grid) sutil por cima */
-    background-color: #0f0f1a;
-    background-image: 
-        linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%),
-        radial-gradient(circle at 50% 20%, rgba(79, 172, 254, 0.08) 0%, transparent 50%),
-        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-    background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px; /* Tamanho da malha da grade */
-    
-    color: #ffffff;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-0);
+    background-image:
+        radial-gradient(ellipse at 50% 0%, rgba(0, 229, 255, 0.14) 0%, transparent 55%),
+        radial-gradient(ellipse at 50% 100%, rgba(255, 42, 77, 0.08) 0%, transparent 50%),
+        linear-gradient(to right, rgba(0, 229, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 229, 255, 0.05) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+    background-attachment: fixed;
+
+    color: #d8f6ff;
+    font-family: var(--font-texto);
     text-align: center;
     margin: 0;
     padding: 20px;
@@ -17,111 +36,362 @@ body {
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    min-height: 95vh;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
-h1 { 
-    margin-bottom: 5px; 
-    color: #4facfe; 
-    letter-spacing: 3px;
-    text-shadow: 0 0 10px rgba(79, 172, 254, 0.3);
+/* Linhas de varredura (scanlines) CRT */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 50;
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0) 0px,
+        rgba(0, 0, 0, 0) 2px,
+        rgba(0, 0, 0, 0.18) 3px
+    );
+}
+
+/* Vinheta nas bordas */
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 49;
+    box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.85);
+}
+
+/* ================= CABEÇALHO ================= */
+header { position: relative; z-index: 2; }
+
+.hud-tag {
+    font-family: var(--font-texto);
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: var(--lime);
+    opacity: 0.85;
+    margin-bottom: 4px;
+}
+
+h1 {
+    font-family: var(--font-titulo);
+    font-weight: 900;
+    font-size: clamp(28px, 8vw, 44px);
+    margin: 0 0 12px 0;
+    color: var(--cyan);
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    text-shadow:
+        0 0 6px var(--cyan),
+        0 0 22px rgba(0, 229, 255, 0.55),
+        0 0 48px rgba(0, 229, 255, 0.3);
+    animation: flicker 6s infinite;
 }
 
 .status-box {
-    background: rgba(22, 33, 62, 0.8);
-    backdrop-filter: blur(5px); /* Efeito vidro fosco moderno */
-    padding: 8px 15px;
-    border-radius: 8px;
-    font-size: 14px;
+    position: relative;
+    display: inline-block;
+    background: linear-gradient(135deg, rgba(18, 27, 39, 0.9), rgba(10, 16, 24, 0.9));
+    padding: 9px 22px;
+    font-family: var(--font-texto);
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
     margin-bottom: 30px;
-    border: 1px solid rgba(79, 172, 254, 0.2);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    border: 1px solid var(--cyan-dim);
+    clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+    box-shadow: inset 0 0 18px rgba(0, 229, 255, 0.12);
 }
-.conectado { color: #00ff88; font-weight: bold; text-shadow: 0 0 8px #00ff88; }
-.desconectado { color: #ff3366; font-weight: bold; text-shadow: 0 0 8px #ff3366; }
 
+.conectado,
+.desconectado {
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+.conectado::before,
+.desconectado::before {
+    content: "";
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+    background: currentColor;
+    box-shadow: 0 0 8px currentColor;
+}
+.conectado    { color: var(--lime); text-shadow: 0 0 10px var(--lime); }
+.desconectado { color: var(--red);  text-shadow: 0 0 10px var(--red); }
+.conectado::before    { animation: pulse-dot 1.4s ease-in-out infinite; }
+.desconectado::before { animation: pulse-dot 0.6s steps(2) infinite; }
+
+/* ================= PAINEL DIRECIONAL ================= */
 .d-pad {
+    --tam: clamp(78px, 22vw, 96px);
     display: grid;
-    grid-template-columns: repeat(3, 85px);
-    grid-template-rows: repeat(3, 85px);
-    gap: 15px;
+    grid-template-columns: repeat(3, var(--tam));
+    grid-template-rows: repeat(3, var(--tam));
+    gap: 12px;
     justify-content: center;
+    padding: 26px;
+    position: relative;
+    z-index: 2;
+    background:
+        radial-gradient(circle at 50% 50%, rgba(0, 229, 255, 0.10), transparent 65%),
+        linear-gradient(160deg, var(--metal-2), var(--metal) 60%, #0b121b);
+    border: 1px solid var(--cyan-dim);
+    box-shadow:
+        0 0 40px rgba(0, 229, 255, 0.12),
+        inset 0 0 40px rgba(0, 0, 0, 0.6);
+    clip-path: polygon(24px 0, calc(100% - 24px) 0, 100% 24px, 100% calc(100% - 24px), calc(100% - 24px) 100%, 24px 100%, 0 calc(100% - 24px), 0 24px);
+    touch-action: none;
 }
 
+/* Anel de radar atrás do direcional */
+.d-pad::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 78%;
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 1px dashed rgba(0, 229, 255, 0.22);
+    box-shadow: 0 0 0 14px rgba(0, 229, 255, 0.03), inset 0 0 30px rgba(0, 229, 255, 0.06);
+    pointer-events: none;
+    animation: girar 40s linear infinite;
+}
+
+/* ================= BOTÕES BASE ================= */
 .btn {
-    background: rgba(22, 33, 62, 0.9);
-    backdrop-filter: blur(5px);
-    color: #4facfe;
-    border: 2px solid #4facfe;
-    border-radius: 18px;
-    font-size: 20px;
-    font-weight: bold;
+    position: relative;
+    background:
+        linear-gradient(160deg, rgba(27, 39, 53, 0.95), rgba(10, 16, 24, 0.95));
+    color: var(--cyan);
+    border: 1px solid var(--cyan);
+    border-radius: 10px;
+    font-family: var(--font-titulo);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.8);
     cursor: pointer;
-    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
     touch-action: manipulation;
-    transition: all 0.1s ease-in-out;
+    transition: transform 0.08s ease, background 0.12s ease, box-shadow 0.12s ease, color 0.12s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    box-shadow:
+        0 0 10px rgba(0, 229, 255, 0.25),
+        inset 0 0 14px rgba(0, 229, 255, 0.12),
+        0 6px 14px rgba(0, 0, 0, 0.55);
 }
 
-.btn:active, .btn.pressionado {
-    background: #4facfe;
-    color: #0f0f1a;
-    transform: scale(0.92);
-    box-shadow: 0 0 20px #4facfe;
+/* Colchetes HUD nos cantos */
+.btn::before,
+.btn::after {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
+    border-color: var(--lime);
+    border-style: solid;
+    transition: border-color 0.12s ease;
+}
+.btn::before { top: -2px;    left: -2px;  border-width: 3px 0 0 3px; border-top-left-radius: 8px; }
+.btn::after  { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-bottom-right-radius: 8px; }
+
+/* Estado ativo / pressionado */
+.btn:active,
+.btn.pressionado {
+    background: linear-gradient(160deg, #19f0ff, #00a9c4);
+    color: #021016;
+    text-shadow: none;
+    transform: scale(0.93);
+    box-shadow:
+        0 0 26px var(--cyan),
+        0 0 60px rgba(0, 229, 255, 0.5),
+        inset 0 0 18px rgba(255, 255, 255, 0.35);
+}
+.btn:active::before, .btn.pressionado::before,
+.btn:active::after,  .btn.pressionado::after {
+    border-color: #ffffff;
 }
 
+/* ================= BOTÃO PARAR ================= */
 .btn-stop {
-    background: rgba(233, 69, 96, 0.9);
-    color: white;
-    border-color: #e94560;
+    background: radial-gradient(circle at 50% 35%, #ff4d6a, #a30f28 75%);
+    color: #ffffff;
+    border: 2px solid var(--red);
     border-radius: 50%;
-    font-size: 28px;
+    font-size: 30px;
+    text-shadow: none;
+    box-shadow:
+        0 0 18px rgba(255, 42, 77, 0.6),
+        inset 0 0 20px rgba(0, 0, 0, 0.35),
+        0 6px 14px rgba(0, 0, 0, 0.55);
 }
-.btn-stop:active, .btn-stop.pressionado {
-    background: #e94560;
-    box-shadow: 0 0 20px #e94560;
+.btn-stop::before,
+.btn-stop::after {
+    width: auto;
+    height: auto;
+    border: 0;
+    border-radius: 50%;
 }
+/* anel tracejado giratório */
+.btn-stop::before {
+    inset: -8px;
+    border: 2px dashed rgba(255, 42, 77, 0.6);
+    animation: girar 12s linear infinite reverse;
+}
+.btn-stop::after { display: none; }
 
-/* Botão da Buzina */
-.buzina { 
-    grid-column: 3; 
-    grid-row: 1; 
-    background: rgba(243, 156, 18, 0.9); 
-    color: #0f0f1a; 
-    border-color: #f39c12; 
+.btn-stop:active,
+.btn-stop.pressionado {
+    background: radial-gradient(circle at 50% 35%, #ff8095, var(--red) 75%);
+    color: #ffffff;
+    box-shadow:
+        0 0 30px var(--red),
+        0 0 70px rgba(255, 42, 77, 0.65),
+        inset 0 0 18px rgba(255, 255, 255, 0.3);
 }
+.btn-stop:active::before,
+.btn-stop.pressionado::before { border-color: #ffffff; }
+
+/* ================= BOTÃO BUZINA (ALERTA) ================= */
+.buzina {
+    grid-column: 3;
+    grid-row: 1;
+    color: #1a0600;
+    border: 2px solid var(--orange);
+    text-shadow: none;
+    /* faixas de perigo (hazard) */
+    background:
+        repeating-linear-gradient(
+            -45deg,
+            #ffb300 0px,
+            #ffb300 10px,
+            #1a1200 10px,
+            #1a1200 20px
+        );
+    animation: alerta 1.2s ease-in-out infinite;
+}
+.buzina::before,
+.buzina::after { border-color: var(--red); }
+
+/* placa central para legibilidade do ícone */
+.buzina .icone-buzina,
+.buzina .legenda-tecla { position: relative; z-index: 1; }
+
 .icone-buzina {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     fill: currentColor;
     margin-bottom: 2px;
+    color: #ffffff;
+    filter: drop-shadow(0 0 3px #000) drop-shadow(0 0 6px var(--red));
 }
 .legenda-tecla {
-    font-size: 11px;
-    opacity: 0.85;
-}
-.buzina:active, .buzina.pressionado { 
-    background: #f39c12; 
-    color: white; 
-    box-shadow: 0 0 20px #f39c12; 
+    font-family: var(--font-titulo);
+    font-size: 12px;
+    font-weight: 900;
+    color: #ffffff;
+    padding: 0 6px;
+    background: rgba(0, 0, 0, 0.75);
+    border-radius: 3px;
+    letter-spacing: 1px;
 }
 
+.buzina:active,
+.buzina.pressionado {
+    background: repeating-linear-gradient(-45deg, var(--red) 0px, var(--red) 10px, #5a0014 10px, #5a0014 20px);
+    border-color: #ffffff;
+    animation: strobe 0.18s steps(2) infinite;
+    box-shadow:
+        0 0 30px var(--red),
+        0 0 80px rgba(255, 42, 77, 0.8),
+        inset 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+/* ================= POSICIONAMENTO ================= */
 .frente   { grid-column: 2; grid-row: 1; }
 .esquerda { grid-column: 1; grid-row: 2; }
 .parar    { grid-column: 2; grid-row: 2; }
 .direita  { grid-column: 3; grid-row: 2; }
 .tras     { grid-column: 2; grid-row: 3; }
 
+/* ================= RODAPÉ ================= */
 footer {
+    position: relative;
+    z-index: 2;
     margin-top: 30px;
-    color: #8892b0;
+    color: #7fa3b3;
+    font-family: var(--font-texto);
     font-size: 13px;
-    border-top: 1px solid rgba(15, 52, 96, 0.5);
+    letter-spacing: 1.5px;
+    border-top: 1px solid var(--cyan-dim);
     padding-top: 12px;
     width: 100%;
-    letter-spacing: 1px;
+    max-width: 520px;
+}
+footer p { margin: 4px 0; }
+footer strong { color: var(--cyan); font-weight: 600; }
+
+/* ================= ANIMAÇÕES ================= */
+@keyframes girar {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+/* o anel do botão stop usa inset, então precisa de rotação simples */
+.btn-stop::before { animation-name: girar-simples; }
+@keyframes girar-simples {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.25; }
+}
+
+@keyframes flicker {
+    0%, 92%, 100% { opacity: 1; }
+    93% { opacity: 0.7; }
+    94% { opacity: 1; }
+    96% { opacity: 0.8; }
+}
+
+@keyframes alerta {
+    0%, 100% { box-shadow: 0 0 10px rgba(255, 138, 0, 0.5), inset 0 0 10px rgba(0, 0, 0, 0.4), 0 6px 14px rgba(0, 0, 0, 0.55); }
+    50%      { box-shadow: 0 0 26px rgba(255, 138, 0, 0.95), 0 0 50px rgba(255, 42, 77, 0.45), inset 0 0 10px rgba(0, 0, 0, 0.4), 0 6px 14px rgba(0, 0, 0, 0.55); }
+}
+
+@keyframes strobe {
+    0%   { filter: brightness(1); }
+    100% { filter: brightness(1.7); }
+}
+
+/* Respeita quem prefere menos animação */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; }
+}
+
+/* Telas muito pequenas */
+@media (max-width: 380px) {
+    .d-pad { padding: 18px; gap: 9px; }
+    .btn { font-size: 13px; }
 }
