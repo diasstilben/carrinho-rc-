@@ -19,6 +19,21 @@
         </div>
     </header>
 
+    <div class="painel">
+    <!-- Legenda dos comandos (apenas informativa) -->
+    <aside class="legenda">
+        <div class="legenda-titulo">// COMANDOS</div>
+        <ul>
+            <li><span class="tecla">W</span><span class="tecla">▲</span><span class="acao">Frente</span></li>
+            <li><span class="tecla">S</span><span class="tecla">▼</span><span class="acao">Trás</span></li>
+            <li><span class="tecla">A</span><span class="tecla">◀</span><span class="acao">Esquerda</span></li>
+            <li><span class="tecla">D</span><span class="tecla">▶</span><span class="acao">Direita</span></li>
+            <li class="item-parar"><span class="tecla tecla-larga">ESPAÇO</span><span class="acao">Parar</span></li>
+            <li class="item-buzina"><span class="tecla">F</span><span class="acao">Buzina</span></li>
+        </ul>
+        <div class="legenda-nota">Segure para mover.<br>Solte para parar.</div>
+    </aside>
+
     <main class="d-pad">
         <div class="btn frente" id="btn-F" onmousedown="comando('F')" onmouseup="comando('S')" ontouchstart="comando('F')" ontouchend="comando('S')">W / ▲</div>
         
@@ -39,6 +54,7 @@
             <span class="legenda-tecla">F</span>
         </div>
     </main>
+    </div>
 
     <footer>
         <p>Projeto Astro - Desenvolvido por <strong>João Dias Stilben Teixeira</strong></p>
