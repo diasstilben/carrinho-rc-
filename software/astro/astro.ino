@@ -1,12 +1,13 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <LittleFS.h>
+#include "pagina.h"
 
 // ==========================================
 // 1. CONFIGURAÇÃO DA REDE WI-FI (Access Point)
 // ==========================================
 const char* ssid = "Astro_Rc";
-const char* password = "dias";
+const char* password = "dias1234";
 
 // Inicia o servidor web na porta padrão HTTP (80)
 WebServer server(80);
@@ -118,12 +119,12 @@ void setup() {
     Serial.begin(115200);
     configurarPinos();
 
-    // Inicia a memória Flash (LittleFS)
-    if (!LittleFS.begin(true)) {
-        Serial.println("Erro ao montar o LittleFS. Verifique se fez o upload da pasta 'data'.");
-        return;
-    }
-    Serial.println("LittleFS montado com sucesso!");
+    server.on("/", HTTP_GET, []() {
+    server.send(200, "text/html", index_html);
+});
+server.on("/index.html", HTTP_GET, []() {
+    server.send(200, "text/html", index_html);
+});
 
     // Cria a Rede Wi-Fi
     Serial.println("Iniciando Wi-Fi do Astro...");
