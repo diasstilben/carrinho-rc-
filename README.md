@@ -56,6 +56,7 @@ O controle do Astro é realizado através de uma rede Wi-Fi gerada pelo próprio
 - **Página embutida no código:** o HTML, o CSS e o JS ficam juntos no arquivo `pagina.h`, que é compilado junto com o `astro.ino`. Não é preciso enviar arquivos para o sistema de arquivos do ESP32 (LittleFS).
 - **Fonte editável em `data/`:** os arquivos `index.html`, `style.css` e `script.js` são a versão separada da mesma página, mais fácil de editar. Ao mudar a página, atualize também o `pagina.h`.
 
+- **Parada de Segurança (failsafe):** enquanto um botão de movimento (ou a buzina) está pressionado, a página repete o comando a cada 150ms. Se o ESP32 ficar 500ms sem receber a repetição (Wi-Fi caiu, celular travou, troca de aba), ele para os motores e desliga a buzina sozinho. A página também manda parar ao perder o foco.
 - **Dashboard Futurista:** A interface de controle adota uma estética sci-fi/HUD (Heads-Up Display) com esquema de cores neon e escuro, simulando um painel de comando avançado.
 - **Sistema de Marchas (Em Desenvolvimento):** O mapeamento de botões na interface envia parâmetros ao backend em C++, que ajusta o teto do sinal PWM (0-1023, 10 bits). Isso permite alternar entre diferentes "marchas", controlando a potência entregue pela bateria aos motores sem alterar a tensão da fonte.
 

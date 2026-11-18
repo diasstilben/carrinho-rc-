@@ -37,6 +37,18 @@ bool buzinaReAtiva = false;
 unsigned long ultimoTempoBip = 0;
 int estadoBuzinaRe = LOW;
 
+// ==========================================
+// PARADA DE SEGURANÇA (failsafe)
+// ==========================================
+// Enquanto um botão está pressionado, a página repete o comando a cada 150ms.
+// Se o ESP ficar TEMPO_LIMITE_MS sem receber a repetição (Wi-Fi caiu, celular
+// travou, aba fechada...), ele para os motores / desliga a buzina sozinho.
+const unsigned long TEMPO_LIMITE_MS = 500;
+bool motoresAtivos = false;
+bool buzinaManual = false;
+unsigned long ultimoComandoMotor = 0;
+unsigned long ultimoComandoBuzina = 0;
+
 // Declaração antecipada da função parar para o configurarPinos não dar erro
 void parar(); 
 
@@ -101,6 +113,19 @@ void desativarAlarmeRe() {
     }
 }
 
+// Chamado a cada comando de movimento: marca que os motores estão ligados
+// e renova o prazo do failsafe
+void manterMotores() {
+    motoresAtivos = true;
+    ultimoComandoMotor = millis();
+}
+
+void pararTudo() {
+    desativarAlarmeRe();
+    parar();
+    motoresAtivos = false;
+}
+
 // ==========================================
 // 4. SETUP INICIAL DO SISTEMA
 // ==========================================
@@ -123,13 +148,18 @@ void setup() {
     server.on("/index.html", HTTP_GET, []() { server.send(200, "text/html", index_html); });
 
     // Rotas de Comandos Motores e Buzina 
-    server.on("/B", []() { emRe = true; tras(); server.send(200); }); // Ativa a ré
-    server.on("/F", []() { desativarAlarmeRe(); frente(); server.send(200); });
-    server.on("/L", []() { desativarAlarmeRe(); esquerda(); server.send(200); });
-    server.on("/R", []() { desativarAlarmeRe(); direita(); server.send(200); });
-    server.on("/S", []() { desativarAlarmeRe(); parar(); server.send(200); });
-    server.on("/H", []() { digitalWrite(BUZINA_PIN, HIGH); server.send(200); });
-    server.on("/Q", []() { digitalWrite(BUZINA_PIN, LOW); server.send(200); });
+    server.on("/B", []() { emRe = true; tras(); manterMotores(); server.send(200); }); // Ativa a ré
+    server.on("/F", []() { desativarAlarmeRe(); frente(); manterMotores(); server.send(200); });
+    server.on("/L", []() { desativarAlarmeRe(); esquerda(); manterMotores(); server.send(200); });
+    server.on("/R", []() { desativarAlarmeRe(); direita(); manterMotores(); server.send(200); });
+    server.on("/S", []() { pararTudo(); server.send(200); });
+    server.on("/H", []() {
+        digitalWrite(BUZINA_PIN, HIGH);
+        buzinaManual = true;
+        ultimoComandoBuzina = millis();
+        server.send(200);
+    });
+    server.on("/Q", []() { digitalWrite(BUZINA_PIN, LOW); buzinaManual = false; server.send(200); });
     server.on("/ping", []() { server.send(200); });
     server.onNotFound([]() { server.send(404, "text/plain", "Nao encontrado"); });
 
@@ -143,6 +173,18 @@ void setup() {
 // ==========================================
 void loop() { 
     server.handleClient(); // Continua ouvindo o navegador rapidamente
+
+    // Failsafe: sem repetição do comando dentro do prazo, desliga sozinho
+    unsigned long agora = millis();
+    if (motoresAtivos && agora - ultimoComandoMotor > TEMPO_LIMITE_MS) {
+        pararTudo();
+        Serial.println("Failsafe: sem comando ha 500ms, motores parados.");
+    }
+    if (buzinaManual && agora - ultimoComandoBuzina > TEMPO_LIMITE_MS) {
+        digitalWrite(BUZINA_PIN, LOW);
+        buzinaManual = false;
+        Serial.println("Failsafe: buzina desligada.");
+    }
 
     // Lógica do Sensor de Ré
     if (emRe) {
