@@ -1,6 +1,5 @@
 #include <WiFi.h>
 #include <WebServer.h>
-#include <LittleFS.h>
 #include "pagina.h"
 
 // ==========================================
@@ -78,18 +77,8 @@ void esquerda() { moverMotores(0, 1, 1, 0, 1023); }
 void direita()  { moverMotores(1, 0, 0, 1, 1023); }
 
 // ==========================================
-// 3. SERVIDOR DE ARQUIVOS (LittleFS) E SENSOR
+// 3. SENSOR DE RÉ
 // ==========================================
-void enviarArquivo(String caminho, String tipoConteudo) {
-    if (LittleFS.exists(caminho)) {
-        File arquivo = LittleFS.open(caminho, "r");
-        server.streamFile(arquivo, tipoConteudo);
-        arquivo.close();
-    } else {
-        server.send(404, "text/plain", "Erro 404: Arquivo nao encontrado no ESP32");
-    }
-}
-
 long medirDistancia() {
     digitalWrite(TRIG_PIN, LOW);
     delayMicroseconds(2);
@@ -119,13 +108,6 @@ void setup() {
     Serial.begin(115200);
     configurarPinos();
 
-    server.on("/", HTTP_GET, []() {
-    server.send(200, "text/html", index_html);
-});
-server.on("/index.html", HTTP_GET, []() {
-    server.send(200, "text/html", index_html);
-});
-
     // Cria a Rede Wi-Fi
     Serial.println("Iniciando Wi-Fi do Astro...");
     WiFi.softAP(ssid, password);
@@ -136,11 +118,9 @@ server.on("/index.html", HTTP_GET, []() {
     // ROTAS DO SERVIDOR WEB
     // ------------------------------------------
     
-    // Entrega o HTML, CSS e JS quando o navegador pedir
-    server.on("/", HTTP_GET, []() { enviarArquivo("/index.html", "text/html"); });
-    server.on("/index.html", HTTP_GET, []() { enviarArquivo("/index.html", "text/html"); });
-    server.on("/style.css", HTTP_GET, []() { enviarArquivo("/style.css", "text/css"); });
-    server.on("/script.js", HTTP_GET, []() { enviarArquivo("/script.js", "application/javascript"); });
+    // Página de controle (HTML, CSS e JS embutidos em pagina.h)
+    server.on("/", HTTP_GET, []() { server.send(200, "text/html", index_html); });
+    server.on("/index.html", HTTP_GET, []() { server.send(200, "text/html", index_html); });
 
     // Rotas de Comandos Motores e Buzina 
     server.on("/B", []() { emRe = true; tras(); server.send(200); }); // Ativa a ré
@@ -151,7 +131,8 @@ server.on("/index.html", HTTP_GET, []() {
     server.on("/H", []() { digitalWrite(BUZINA_PIN, HIGH); server.send(200); });
     server.on("/Q", []() { digitalWrite(BUZINA_PIN, LOW); server.send(200); });
     server.on("/ping", []() { server.send(200); });
-    
+    server.onNotFound([]() { server.send(404, "text/plain", "Nao encontrado"); });
+
     // Inicia o servidor
     server.begin();
     Serial.println("Servidor pronto! Astro aguardando ordens.");

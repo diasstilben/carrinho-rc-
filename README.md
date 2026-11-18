@@ -49,12 +49,15 @@ Os motores do lado esquerdo estão ligados em paralelo nas saídas OUT1 e OUT2. 
 
 ---
 
-## 💻 Software e Interface (LittleFS)
+## 💻 Software e Interface
 
-O controle do Astro é realizado através de uma rede Wi-Fi gerada pelo próprio ESP32, servindo um painel de controle web embarcado diretamente na memória flash usando o sistema de arquivos **LittleFS**.
+O controle do Astro é realizado através de uma rede Wi-Fi gerada pelo próprio ESP32 (`Astro_Rc`, acesso em `192.168.4.1`), servindo um painel de controle web embutido no próprio firmware.
+
+- **Página embutida no código:** o HTML, o CSS e o JS ficam juntos no arquivo `pagina.h`, que é compilado junto com o `astro.ino`. Não é preciso enviar arquivos para o sistema de arquivos do ESP32 (LittleFS).
+- **Fonte editável em `data/`:** os arquivos `index.html`, `style.css` e `script.js` são a versão separada da mesma página, mais fácil de editar. Ao mudar a página, atualize também o `pagina.h`.
 
 - **Dashboard Futurista:** A interface de controle adota uma estética sci-fi/HUD (Heads-Up Display) com esquema de cores neon e escuro, simulando um painel de comando avançado.
-- **Sistema de Marchas (Em Desenvolvimento):** O mapeamento de botões na interface envia parâmetros ao backend em C++, que ajusta o teto do sinal PWM (0-255). Isso permite alternar entre diferentes "marchas", controlando a potência entregue pela bateria aos motores sem alterar a tensão da fonte.
+- **Sistema de Marchas (Em Desenvolvimento):** O mapeamento de botões na interface envia parâmetros ao backend em C++, que ajusta o teto do sinal PWM (0-1023, 10 bits). Isso permite alternar entre diferentes "marchas", controlando a potência entregue pela bateria aos motores sem alterar a tensão da fonte.
 
 ---
 
@@ -70,8 +73,10 @@ carrinho-rc/
 │       └── carcaça do astro com motores.jpeg # Registros físicos da montagem
 │       └── conexôes_cad.jng # Foto da montagem no simulador 
 └── software/
-    ├── software.ino                    # Código principal em C++ (Servidor Web e Controle)
-    └── data/                           # Arquivos estáticos do LittleFS
-        ├── index.html                  # Estrutura do painel de controle (HUD)
-        ├── style.css                   # Estilização visual futurista
-        └── script.js                   # Lógica HTTP, leitura de teclas e sistema de marchas
+    └── astro/
+        ├── astro.ino                   # Código principal em C++ (Servidor Web e Controle)
+        ├── pagina.h                    # Página de controle completa, embutida no firmware
+        └── data/                       # Fonte editável da página (mesmo conteúdo do pagina.h)
+            ├── index.html              # Estrutura do painel de controle (HUD)
+            ├── style.css               # Estilização visual futurista
+            └── script.js               # Lógica HTTP, leitura de teclas e botões

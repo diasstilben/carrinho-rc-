@@ -88,3 +88,42 @@ function removerDestaqueMovimento() {
         if(el) el.classList.remove('pressionado');
     }
 }
+
+// =====================================
+// BOTÕES DA TELA (mouse e toque)
+// =====================================
+// Os eventos "pointer" tratam mouse e dedo do mesmo jeito e disparam uma
+// única vez por toque (antes, mousedown + touchstart mandavam o comando 2x).
+function ligarBotao(id, aoPressionar, aoSoltar) {
+    let el = document.getElementById(id);
+    let pressionado = false;
+
+    el.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        // Continua recebendo o "soltar" mesmo se o dedo escorregar para fora do botão
+        el.setPointerCapture(e.pointerId);
+        pressionado = true;
+        el.classList.add('pressionado');
+        aoPressionar();
+    });
+
+    let soltar = () => {
+        if (!pressionado) return; // pointerup e lostpointercapture chegam juntos
+        pressionado = false;
+        el.classList.remove('pressionado');
+        if (aoSoltar) aoSoltar();
+    };
+    el.addEventListener('pointerup', soltar);
+    el.addEventListener('pointercancel', soltar);
+    el.addEventListener('lostpointercapture', soltar);
+
+    // Sem menu de contexto ao segurar o botão no celular
+    el.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
+ligarBotao('btn-F', () => comando('F'), () => comando('S'));
+ligarBotao('btn-B', () => comando('B'), () => comando('S'));
+ligarBotao('btn-L', () => comando('L'), () => comando('S'));
+ligarBotao('btn-R', () => comando('R'), () => comando('S'));
+ligarBotao('btn-S', () => comando('S'));
+ligarBotao('btn-H', () => comando('H'), () => comando('Q'));

@@ -3,15 +3,22 @@
 
 #include <pgmspace.h>
 
+// Pagina de controle servida pelo ESP32 (HTML + CSS + JS num arquivo so).
+// Montada a partir de data/index.html, data/style.css e data/script.js:
+// ao mudar a pagina, edite os arquivos em data/ e atualize este arquivo tambem.
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Astro RC</title>
-  <style>
-   /* =====================================================
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Astro - Painel de Controle</title>
+    <!-- Fontes sci-fi (opcional: precisam de internet no celular; sem elas o CSS usa fontes de reserva) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+/* =====================================================
    ASTRO 4WD - HUD CYBERPUNK / MECHA
    ===================================================== */
 :root {
@@ -201,7 +208,7 @@ h1 {
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
-    touch-action: manipulation;
+    touch-action: none; /* evita rolagem/zoom ao segurar o botão */
     transition: transform 0.08s ease, background 0.12s ease, box-shadow 0.12s ease, color 0.12s ease;
     display: flex;
     flex-direction: column;
@@ -511,21 +518,7 @@ footer strong { color: var(--cyan); font-weight: 600; }
     .d-pad { padding: 18px; gap: 9px; }
     .btn { font-size: 13px; }
 }
-  </style>
-</head>
-<body>
-
-  <!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Astro - Painel de Controle</title>
-    <!-- Fontes sci-fi (opcional: precisam de internet no celular; sem elas o CSS usa fontes de reserva) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    </style>
 </head>
 <body>
     <header>
@@ -552,19 +545,19 @@ footer strong { color: var(--cyan); font-weight: 600; }
     </aside>
 
     <main class="d-pad">
-        <div class="btn frente" id="btn-F" onmousedown="comando('F')" onmouseup="comando('S')" ontouchstart="comando('F')" ontouchend="comando('S')">W / ▲</div>
+        <div class="btn frente" id="btn-F">W / ▲</div>
         
-        <div class="btn esquerda" id="btn-L" onmousedown="comando('L')" onmouseup="comando('S')" ontouchstart="comando('L')" ontouchend="comando('S')">A / ◀</div>
+        <div class="btn esquerda" id="btn-L">A / ◀</div>
         
         <!-- Barra de espaço aciona o Parar central -->
-        <div class="btn btn-stop parar" id="btn-S" onmousedown="comando('S')" ontouchstart="comando('S')">🛑</div>
+        <div class="btn btn-stop parar" id="btn-S">🛑</div>
         
-        <div class="btn direita" id="btn-R" onmousedown="comando('R')" onmouseup="comando('S')" ontouchstart="comando('R')" ontouchend="comando('S')">D / ▶</div>
+        <div class="btn direita" id="btn-R">D / ▶</div>
         
-        <div class="btn tras" id="btn-B" onmousedown="comando('B')" onmouseup="comando('S')" ontouchstart="comando('B')" ontouchend="comando('S')">S / ▼</div>
+        <div class="btn tras" id="btn-B">S / ▼</div>
 
         <!-- Botão da Buzina (Tecla F / Ícone Vetorial Elegante) -->
-        <div class="btn buzina" id="btn-H" onmousedown="comando('H')" onmouseup="comando('Q')" ontouchstart="comando('H')" ontouchend="comando('Q')">
+        <div class="btn buzina" id="btn-H">
             <svg class="icone-buzina" viewBox="0 0 24 24">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
             </svg>
@@ -578,12 +571,8 @@ footer strong { color: var(--cyan); font-weight: 600; }
         <p>Acesse meu GitHub em <strong> https://github.com/diasstilben</strong></p>
     </footer>
 
-    <script src="script.js"></script>
-</body>
-</html>
-
-  <script>
-    function atualizarStatus(conectado) {
+    <script>
+function atualizarStatus(conectado) {
     let statusText = document.getElementById('status-texto');
     if(conectado) {
         statusText.innerText = 'Online';
@@ -674,7 +663,46 @@ function removerDestaqueMovimento() {
     }
 }
 
-  </script>
+// =====================================
+// BOTÕES DA TELA (mouse e toque)
+// =====================================
+// Os eventos "pointer" tratam mouse e dedo do mesmo jeito e disparam uma
+// única vez por toque (antes, mousedown + touchstart mandavam o comando 2x).
+function ligarBotao(id, aoPressionar, aoSoltar) {
+    let el = document.getElementById(id);
+    let pressionado = false;
+
+    el.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        // Continua recebendo o "soltar" mesmo se o dedo escorregar para fora do botão
+        el.setPointerCapture(e.pointerId);
+        pressionado = true;
+        el.classList.add('pressionado');
+        aoPressionar();
+    });
+
+    let soltar = () => {
+        if (!pressionado) return; // pointerup e lostpointercapture chegam juntos
+        pressionado = false;
+        el.classList.remove('pressionado');
+        if (aoSoltar) aoSoltar();
+    };
+    el.addEventListener('pointerup', soltar);
+    el.addEventListener('pointercancel', soltar);
+    el.addEventListener('lostpointercapture', soltar);
+
+    // Sem menu de contexto ao segurar o botão no celular
+    el.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
+ligarBotao('btn-F', () => comando('F'), () => comando('S'));
+ligarBotao('btn-B', () => comando('B'), () => comando('S'));
+ligarBotao('btn-L', () => comando('L'), () => comando('S'));
+ligarBotao('btn-R', () => comando('R'), () => comando('S'));
+ligarBotao('btn-S', () => comando('S'));
+ligarBotao('btn-H', () => comando('H'), () => comando('Q'));
+
+    </script>
 </body>
 </html>
 )rawliteral";
