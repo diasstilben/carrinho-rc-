@@ -57,6 +57,7 @@ body {
     justify-content: space-between;
     align-items: center;
     min-height: 100vh;
+    min-height: 100dvh;
     overflow-x: hidden;
     position: relative;
     user-select: none;
@@ -153,15 +154,18 @@ h1 {
 .conectado::before    { animation: pulse-dot 1.4s ease-in-out infinite; }
 .desconectado::before { animation: pulse-dot 0.6s steps(2) infinite; }
 
-/* ================= PAINEL DIRECIONAL ================= */
-.d-pad {
-    --tam: clamp(78px, 22vw, 96px);
+/* ================= CONTROLES ANALÓGICOS ================= */
+.controles {
+    --stick: min(clamp(130px, 30vw, 210px), 52vh);
+    --stick: min(clamp(130px, 30vw, 210px), 52dvh);
+    --botao: clamp(64px, 16vw, 82px);
     display: grid;
-    grid-template-columns: repeat(3, var(--tam));
-    grid-template-rows: repeat(3, var(--tam));
-    gap: 12px;
+    grid-template-columns: auto auto auto;
+    grid-template-areas: "esq centro dir";
+    align-items: center;
     justify-content: center;
-    padding: 26px;
+    gap: 26px;
+    padding: 22px 28px;
     position: relative;
     z-index: 2;
     background:
@@ -175,21 +179,174 @@ h1 {
     touch-action: none;
 }
 
-/* Anel de radar atrás do direcional */
-.d-pad::before {
+.stick-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+.stick-esq { grid-area: esq; }
+.stick-dir { grid-area: dir; }
+
+.stick-rotulo {
+    font-family: var(--font-titulo);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--lime);
+    text-shadow: 0 0 8px rgba(182, 255, 0, 0.6);
+    white-space: nowrap;
+}
+
+.stick-valor {
+    font-family: var(--font-titulo);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    min-width: 6ch;
+    color: var(--cyan);
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.7);
+}
+.stick-valor.re { color: var(--red); text-shadow: 0 0 8px rgba(255, 42, 77, 0.7); }
+
+/* Base do analógico */
+.joystick {
+    position: relative;
+    width: var(--stick);
+    height: var(--stick);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 229, 255, 0.07), rgba(5, 7, 13, 0.92) 72%);
+    border: 1px solid var(--cyan-dim);
+    box-shadow:
+        inset 0 0 30px rgba(0, 0, 0, 0.85),
+        0 0 24px rgba(0, 229, 255, 0.12);
+    touch-action: none;  /* o dedo arrasta o analógico, não a página */
+    cursor: grab;
+    -webkit-touch-callout: none;
+}
+.joystick.ativo { cursor: grabbing; border-color: var(--cyan); }
+
+/* Trilho: mostra para onde a manopla anda */
+.joystick::before {
     content: "";
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 78%;
-    aspect-ratio: 1;
     transform: translate(-50%, -50%);
-    border-radius: 50%;
-    border: 1px dashed rgba(0, 229, 255, 0.22);
-    box-shadow: 0 0 0 14px rgba(0, 229, 255, 0.03), inset 0 0 30px rgba(0, 229, 255, 0.06);
+    border-radius: 999px;
+    border: 1px dashed rgba(0, 229, 255, 0.35);
+    background: rgba(0, 229, 255, 0.05);
     pointer-events: none;
-    animation: girar 40s linear infinite;
 }
+.joystick.vertical::before   { width: 30%; height: 88%; }
+.joystick.horizontal::before { width: 88%; height: 30%; }
+
+/* Anel de radar girando */
+.joystick::after {
+    content: "";
+    position: absolute;
+    inset: 7%;
+    border-radius: 50%;
+    border: 1px dashed rgba(0, 229, 255, 0.16);
+    pointer-events: none;
+    animation: girar-simples 40s linear infinite;
+}
+
+/* Manopla (a "bolinha" que o dedo arrasta) */
+.manopla {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 42%;
+    height: 42%;
+    margin-left: -21%;
+    margin-top: -21%;
+    border-radius: 50%;
+    z-index: 1;
+    pointer-events: none;
+    background: radial-gradient(circle at 40% 35%, #2b3d52, #0d1520 72%);
+    border: 2px solid var(--cyan);
+    box-shadow:
+        0 0 14px rgba(0, 229, 255, 0.45),
+        inset 0 0 14px rgba(0, 229, 255, 0.2),
+        0 6px 14px rgba(0, 0, 0, 0.6);
+    transition: transform 0.15s ease-out, background 0.12s ease, box-shadow 0.12s ease; /* volta suave ao centro */
+}
+/* anel interno (textura de "pegada") */
+.manopla::after {
+    content: "";
+    position: absolute;
+    inset: 22%;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 229, 255, 0.45);
+}
+.joystick.ativo .manopla {
+    transition: none; /* segue o dedo sem atraso */
+    background: radial-gradient(circle at 40% 35%, #19f0ff, #00a9c4 75%);
+    box-shadow:
+        0 0 26px var(--cyan),
+        0 0 50px rgba(0, 229, 255, 0.5),
+        inset 0 0 14px rgba(255, 255, 255, 0.35);
+}
+.joystick.ativo .manopla::after { border-color: rgba(255, 255, 255, 0.7); }
+
+/* Coluna do meio: parar, buzina e telemetria */
+.centro {
+    grid-area: centro;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+}
+.centro .btn {
+    width: var(--botao);
+    height: var(--botao);
+}
+
+.telemetria {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: calc(var(--botao) + 20px);
+}
+.tele-lado {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-titulo);
+    font-size: 10px;
+    font-weight: 700;
+    color: #7fa3b3;
+}
+.barra {
+    position: relative;
+    flex: 1;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--cyan-dim);
+    border-radius: 2px;
+    overflow: hidden;
+}
+/* risco do zero no meio da barra */
+.barra::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(216, 246, 255, 0.5);
+}
+.barra-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    background: var(--cyan);
+    box-shadow: 0 0 6px var(--cyan);
+}
+.barra-fill.re { background: var(--red); box-shadow: 0 0 6px var(--red); }
 
 /* ================= BOTÕES BASE ================= */
 .btn {
@@ -294,8 +451,6 @@ h1 {
 
 /* ================= BOTÃO BUZINA (ALERTA) ================= */
 .buzina {
-    grid-column: 3;
-    grid-row: 1;
     color: #1a0600;
     border: 2px solid var(--orange);
     text-shadow: none;
@@ -346,13 +501,6 @@ h1 {
         0 0 80px rgba(255, 42, 77, 0.8),
         inset 0 0 20px rgba(255, 255, 255, 0.3);
 }
-
-/* ================= POSICIONAMENTO ================= */
-.frente   { grid-column: 2; grid-row: 1; }
-.esquerda { grid-column: 1; grid-row: 2; }
-.parar    { grid-column: 2; grid-row: 2; }
-.direita  { grid-column: 3; grid-row: 2; }
-.tras     { grid-column: 2; grid-row: 3; }
 
 /* ================= LEGENDA DE COMANDOS ================= */
 .painel {
@@ -513,10 +661,50 @@ footer strong { color: var(--cyan); font-weight: 600; }
     *, *::before, *::after { animation: none !important; }
 }
 
-/* Telas muito pequenas */
-@media (max-width: 380px) {
-    .d-pad { padding: 18px; gap: 9px; }
-    .btn { font-size: 13px; }
+/* Celular em pé: parar/buzina em cima, um analógico em cada polegar embaixo */
+@media (max-width: 640px) {
+    .controles {
+        --stick: min(37vw, 190px);
+        --botao: 62px;
+        grid-template-columns: auto auto;
+        grid-template-areas:
+            "centro centro"
+            "esq    dir";
+        gap: 18px 14px;
+        padding: 18px 16px;
+    }
+    .centro { flex-direction: row; gap: 16px; }
+    .telemetria { width: 90px; }
+    .stick-rotulo { letter-spacing: 2px; }
+}
+
+/* Celular estreito (iPhone SE, Androids pequenos) */
+@media (max-width: 360px) {
+    .controles { --stick: min(38vw, 150px); --botao: 56px; gap: 16px 10px; padding: 16px 12px; }
+    .stick-rotulo { font-size: 10px; letter-spacing: 1px; }
+    .status-box { padding: 8px 14px; font-size: 13px; letter-spacing: 1px; }
+}
+
+/* Celular deitado: tela baixa, então encolhe o cabeçalho */
+@media (max-height: 500px) and (orientation: landscape) {
+    body { padding: 10px; }
+    .hud-tag { display: none; }
+    h1 { font-size: 24px; margin-bottom: 6px; }
+    .status-box { margin-bottom: 12px; padding: 6px 16px; font-size: 13px; }
+    footer { margin-top: 14px; }
+    .controles {
+        --stick: min(30vw, calc(100vh - 185px));
+        --stick: min(30vw, calc(100dvh - 185px)); /* desconta a barra de endereço */
+        --botao: 54px;
+        padding: 14px 28px;
+    }
+    .centro { gap: 10px; }
+    .stick-area { gap: 6px; }
+}
+
+/* Só toque (sem teclado/mouse): a legenda de teclas não serve, esconde */
+@media (hover: none) and (pointer: coarse) {
+    .legenda { display: none; }
 }
     </style>
 </head>
@@ -534,34 +722,52 @@ footer strong { color: var(--cyan); font-weight: 600; }
     <aside class="legenda">
         <div class="legenda-titulo">// COMANDOS</div>
         <ul>
-            <li><span class="tecla">W</span><span class="tecla">▲</span><span class="acao">Frente</span></li>
-            <li><span class="tecla">S</span><span class="tecla">▼</span><span class="acao">Trás</span></li>
+            <li><span class="tecla">W</span><span class="tecla">▲</span><span class="acao">Acelera</span></li>
+            <li><span class="tecla">S</span><span class="tecla">▼</span><span class="acao">Ré</span></li>
             <li><span class="tecla">A</span><span class="tecla">◀</span><span class="acao">Esquerda</span></li>
             <li><span class="tecla">D</span><span class="tecla">▶</span><span class="acao">Direita</span></li>
             <li class="item-parar"><span class="tecla tecla-larga">ESPAÇO</span><span class="acao">Parar</span></li>
             <li class="item-buzina"><span class="tecla">F</span><span class="acao">Buzina</span></li>
         </ul>
-        <div class="legenda-nota">Segure para mover.<br>Solte para parar.</div>
+        <div class="legenda-nota">W + A / W + D faz curva.<br>No celular, use os analógicos.</div>
     </aside>
 
-    <main class="d-pad">
-        <div class="btn frente" id="btn-F">W / ▲</div>
-        
-        <div class="btn esquerda" id="btn-L">A / ◀</div>
-        
-        <!-- Barra de espaço aciona o Parar central -->
-        <div class="btn btn-stop parar" id="btn-S">🛑</div>
-        
-        <div class="btn direita" id="btn-R">D / ▶</div>
-        
-        <div class="btn tras" id="btn-B">S / ▼</div>
+    <main class="controles">
+        <!-- Analógico esquerdo: acelerador (só eixo vertical) -->
+        <div class="stick-area stick-esq">
+            <div class="stick-rotulo">// ACELERADOR</div>
+            <div class="joystick vertical" id="stick-acel">
+                <div class="manopla"></div>
+            </div>
+            <div class="stick-valor" id="valor-acel">0%</div>
+        </div>
 
-        <!-- Botão da Buzina (Tecla F / Ícone Vetorial Elegante) -->
-        <div class="btn buzina" id="btn-H">
-            <svg class="icone-buzina" viewBox="0 0 24 24">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-            </svg>
-            <span class="legenda-tecla">F</span>
+        <div class="centro">
+            <!-- Barra de espaço também aciona o Parar -->
+            <div class="btn btn-stop" id="btn-S">🛑</div>
+
+            <!-- Botão da Buzina (Tecla F) -->
+            <div class="btn buzina" id="btn-H">
+                <svg class="icone-buzina" viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+                <span class="legenda-tecla">F</span>
+            </div>
+
+            <!-- Potência que está indo para cada lado do carrinho -->
+            <div class="telemetria">
+                <div class="tele-lado"><span>E</span><div class="barra"><div class="barra-fill" id="barra-esq"></div></div></div>
+                <div class="tele-lado"><span>D</span><div class="barra"><div class="barra-fill" id="barra-dir"></div></div></div>
+            </div>
+        </div>
+
+        <!-- Analógico direito: direção (só eixo horizontal) -->
+        <div class="stick-area stick-dir">
+            <div class="stick-rotulo">// DIREÇÃO</div>
+            <div class="joystick horizontal" id="stick-dir">
+                <div class="manopla"></div>
+            </div>
+            <div class="stick-valor" id="valor-dir">0%</div>
         </div>
     </main>
     </div>
@@ -600,49 +806,203 @@ function comando(cmd) {
 setInterval(() => { comando('ping'); }, 1500);
 
 // =====================================
-// ESTADO DO CONTROLE E REPETIÇÃO (failsafe)
+// AJUSTES DO CONTROLE
 // =====================================
-// Enquanto um movimento ou a buzina estiver ativo, o comando é repetido a cada
+// Enquanto o carrinho anda (ou a buzina toca), o comando é repetido a cada
 // INTERVALO_REPETICAO ms. O ESP32 desliga tudo sozinho se ficar 500ms sem
 // receber a repetição: se a conexão cair, o carrinho para em vez de seguir andando.
 const INTERVALO_REPETICAO = 150;
-const BOTAO_DO_MOVIMENTO = { F: 'btn-F', B: 'btn-B', L: 'btn-L', R: 'btn-R' };
 
-let movimentoAtual = null;   // 'F', 'B', 'L', 'R' ou null (parado)
+// Folga no centro do analógico (0.12 = 12% do curso): evita que o carrinho
+// fique "arrastando" quando o dedo está quase no meio.
+const ZONA_MORTA = 0.12;
+
+// Na ré, virar para a direita leva a TRASEIRA para a direita, como num carro
+// de verdade. Mude para false se preferir o jeito "tanque" (inverte).
+const RE_COMO_CARRO = true;
+
+// Pelo teclado, W + A/D faz uma curva aberta em vez de girar no lugar.
+// (0 = nem vira, 1 = curva bem fechada)
+const CURVA_TECLADO = 0.6;
+
+// =====================================
+// ESTADO
+// =====================================
+let analogico = { acel: 0, dir: 0 };   // -1..1 vindo dos analógicos da tela
+let teclasSeguras = new Set();         // 'F', 'B', 'L', 'R' seguras no teclado
+let motores = { esq: 0, dir: 0 };      // potência calculada: -1023 (ré) .. 1023 (frente)
+let enviado = { esq: 0, dir: 0 };      // último valor mandado ao ESP32
+let envioPendente = false;
 let buzinaLigada = false;
-let repeticaoPendente = false;
 
-// Teclas e botões de movimento seguros agora, na ordem em que foram pressionados.
-// O último manda; ao soltá-lo, volta para o anterior que ainda estiver seguro.
-let segurados = [];  // [{ origem, cmd }]
+function limitar(v) { return Math.max(-1, Math.min(1, v)); }
 
-function iniciarMovimento(cmd) {
-    if (movimentoAtual === cmd) return;
-    removerDestaqueMovimento();
-    movimentoAtual = cmd;
-    destacar(BOTAO_DO_MOVIMENTO[cmd]);
-    comando(cmd);
+// Junta acelerador + direção numa potência para cada lado do carrinho
+// (mistura "arcade" para tração diferencial, igual tanque/skid-steer).
+function calcularMotores() {
+    let tecladoY = (teclasSeguras.has('F') ? 1 : 0) - (teclasSeguras.has('B') ? 1 : 0);
+    let tecladoX = (teclasSeguras.has('R') ? 1 : 0) - (teclasSeguras.has('L') ? 1 : 0);
+    if (tecladoY !== 0) tecladoX *= CURVA_TECLADO;
+
+    let y = limitar(analogico.acel + tecladoY);   // + frente / - ré
+    let x = limitar(analogico.dir + tecladoX);    // + direita / - esquerda
+    if (RE_COMO_CARRO && y < 0) x = -x;
+
+    let esq = y + x;
+    let dir = y - x;
+    // Se algum lado passou de 100%, reduz os dois na mesma proporção
+    let maior = Math.max(1, Math.abs(esq), Math.abs(dir));
+    // Arredonda em passos de 2% para não mandar comando a cada pixel
+    let passo = v => Math.round(v / maior * 50) / 50;
+    return {
+        y, x,
+        esq: Math.round(passo(esq) * 1023),
+        dir: Math.round(passo(dir) * 1023)
+    };
 }
 
-function pararMovimento() {
-    segurados = [];
-    movimentoAtual = null;
-    removerDestaqueMovimento();
-    comando('S');
+function atualizarMotores() {
+    let r = calcularMotores();
+    motores = { esq: r.esq, dir: r.dir };
+    mostrarTelemetria(r);
+    enviarMotores(false);
 }
 
-function segurar(origem, cmd) {
-    if (!segurados.some(s => s.origem === origem)) segurados.push({ origem, cmd });
-    iniciarMovimento(cmd);
+// Manda a potência atual. Só um pedido por vez: se o valor mudar enquanto
+// espera a resposta, o mais novo é mandado assim que ela chegar.
+function enviarMotores(repetir) {
+    if (envioPendente) return;
+    let { esq, dir } = motores;
+    let mudou = esq !== enviado.esq || dir !== enviado.dir;
+    let andando = esq !== 0 || dir !== 0;
+    if (!mudou && !(repetir && andando)) return;
+
+    envioPendente = true;
+    enviado = { esq, dir };
+    comando(andando ? `M?e=${esq}&d=${dir}` : 'S').finally(() => {
+        envioPendente = false;
+        enviarMotores(false);
+    });
 }
 
-function soltar(origem) {
-    segurados = segurados.filter(s => s.origem !== origem);
-    if (segurados.length > 0) {
-        iniciarMovimento(segurados[segurados.length - 1].cmd);
-    } else if (movimentoAtual) {
-        pararMovimento();
+setInterval(() => {
+    enviarMotores(true);
+    if (buzinaLigada) comando('H');
+}, INTERVALO_REPETICAO);
+
+// =====================================
+// TELEMETRIA NA TELA
+// =====================================
+function mostrarBarra(id, valor) {
+    let el = document.getElementById(id);
+    let largura = Math.abs(valor) / 1023 * 50;   // metade da barra = 100%
+    el.style.width = largura + '%';
+    el.style.left = (valor >= 0 ? 50 : 50 - largura) + '%';
+    el.classList.toggle('re', valor < 0);
+}
+
+function mostrarTelemetria(r) {
+    let acel = document.getElementById('valor-acel');
+    acel.innerText = (r.y > 0 ? '▲ ' : r.y < 0 ? '▼ ' : '') + Math.round(Math.abs(r.y) * 100) + '%';
+    acel.classList.toggle('re', r.y < 0);
+
+    // mostra a direção como o usuário mexeu (antes da inversão da ré)
+    let xTela = (RE_COMO_CARRO && r.y < 0) ? -r.x : r.x;
+    document.getElementById('valor-dir').innerText =
+        (xTela < 0 ? '◀ ' : '') + Math.round(Math.abs(xTela) * 100) + '%' + (xTela > 0 ? ' ▶' : '');
+
+    mostrarBarra('barra-esq', r.esq);
+    mostrarBarra('barra-dir', r.dir);
+
+    // Pelo teclado, a manopla também se mexe para mostrar o comando
+    let tecladoY = (teclasSeguras.has('F') ? 1 : 0) - (teclasSeguras.has('B') ? 1 : 0);
+    let tecladoX = (teclasSeguras.has('R') ? 1 : 0) - (teclasSeguras.has('L') ? 1 : 0);
+    stickAcel.mostrar(-tecladoY);
+    stickDir.mostrar(tecladoX);
+}
+
+// =====================================
+// ANALÓGICOS DA TELA (mouse e toque)
+// =====================================
+// eixo 'y' = só sobe/desce (acelerador), 'x' = só esquerda/direita (direção).
+// Cada analógico segue o seu próprio dedo, então dá para usar os dois juntos.
+function criarAnalogico(id, eixo, aoMover) {
+    let base = document.getElementById(id);
+    let manopla = base.querySelector('.manopla');
+    let dedo = null;
+
+    function curso() {
+        // até onde o centro da manopla pode ir a partir do centro da base
+        return (base.clientWidth - manopla.offsetWidth) / 2;
     }
+
+    function posicionar(px) {
+        manopla.style.transform = eixo === 'y' ? `translate(0, ${px}px)` : `translate(${px}px, 0)`;
+    }
+
+    function mover(e) {
+        let r = base.getBoundingClientRect();
+        let c = curso();
+        let d = eixo === 'y'
+            ? e.clientY - (r.top + r.height / 2)
+            : e.clientX - (r.left + r.width / 2);
+        d = Math.max(-c, Math.min(c, d));
+        posicionar(d);
+
+        let v = d / c;   // -1..1
+        if (Math.abs(v) < ZONA_MORTA) v = 0;
+        else v = Math.sign(v) * (Math.abs(v) - ZONA_MORTA) / (1 - ZONA_MORTA);
+        aoMover(eixo === 'y' ? -v : v);   // para cima = frente
+    }
+
+    function soltar() {
+        if (dedo === null) return;
+        if (base.hasPointerCapture(dedo)) base.releasePointerCapture(dedo);
+        dedo = null;
+        base.classList.remove('ativo');
+        posicionar(0);   // volta ao centro (a transição do CSS deixa suave)
+        aoMover(0);
+    }
+
+    base.addEventListener('pointerdown', (e) => {
+        if (dedo !== null) return;   // já tem um dedo nesse analógico
+        e.preventDefault();
+        dedo = e.pointerId;
+        // Continua recebendo o movimento mesmo se o dedo sair da base
+        base.setPointerCapture(dedo);
+        base.classList.add('ativo');
+        mover(e);
+    });
+    base.addEventListener('pointermove', (e) => {
+        if (e.pointerId === dedo) mover(e);
+    });
+    let fim = (e) => { if (e.pointerId === dedo) soltar(); };
+    base.addEventListener('pointerup', fim);
+    base.addEventListener('pointercancel', fim);
+    base.addEventListener('lostpointercapture', fim);
+    base.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    return {
+        soltar,
+        // usado pelo teclado: mostra a posição sem ninguém tocar
+        mostrar(v) { if (dedo === null) posicionar(v * curso()); }
+    };
+}
+
+let stickAcel = criarAnalogico('stick-acel', 'y', (v) => { analogico.acel = v; atualizarMotores(); });
+let stickDir  = criarAnalogico('stick-dir',  'x', (v) => { analogico.dir = v;  atualizarMotores(); });
+
+// =====================================
+// PARAR E BUZINA
+// =====================================
+function pararMovimento() {
+    teclasFisicas = {};
+    teclasSeguras.clear();
+    stickAcel.soltar();
+    stickDir.soltar();
+    analogico = { acel: 0, dir: 0 };
+    atualizarMotores();
+    comando('S');   // manda já, sem esperar a fila
 }
 
 function ligarBuzina() {
@@ -659,20 +1019,8 @@ function desligarBuzina() {
     comando('Q'); // Q de Quiet / Silêncio
 }
 
-setInterval(() => {
-    // Se a repetição anterior ainda não respondeu, não empilha outra:
-    // com a conexão ruim o ESP para sozinho, que é o comportamento certo.
-    if (repeticaoPendente) return;
-    let pedidos = [];
-    if (movimentoAtual) pedidos.push(comando(movimentoAtual));
-    if (buzinaLigada) pedidos.push(comando('H'));
-    if (pedidos.length === 0) return;
-    repeticaoPendente = true;
-    Promise.all(pedidos).finally(() => { repeticaoPendente = false; });
-}, INTERVALO_REPETICAO);
-
 // Se a página perder o foco (trocou de aba/app, tela apagou), para tudo:
-// nesses casos o navegador nunca entrega o "soltar" da tecla ou do botão.
+// nesses casos o navegador nunca entrega o "soltar" da tecla ou do dedo.
 function pararTudo() {
     pararMovimento();
     desligarBuzina();
@@ -682,8 +1030,44 @@ document.addEventListener('visibilitychange', () => {
     if (document.hidden) pararTudo();
 });
 
+function destacar(idElemento) {
+    let el = document.getElementById(idElemento);
+    if(el) el.classList.add('pressionado');
+}
+
+function removerDestaque(idElemento) {
+    let el = document.getElementById(idElemento);
+    if(el) el.classList.remove('pressionado');
+}
+
+// Botões de segurar (pointer = mouse e dedo do mesmo jeito)
+function ligarBotao(id, aoPressionar, aoSoltar) {
+    let el = document.getElementById(id);
+    let pressionado = false;
+
+    el.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        el.setPointerCapture(e.pointerId);
+        pressionado = true;
+        aoPressionar();
+    });
+
+    let aoLiberar = () => {
+        if (!pressionado) return; // pointerup e lostpointercapture chegam juntos
+        pressionado = false;
+        aoSoltar();
+    };
+    el.addEventListener('pointerup', aoLiberar);
+    el.addEventListener('pointercancel', aoLiberar);
+    el.addEventListener('lostpointercapture', aoLiberar);
+    el.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
+ligarBotao('btn-S', () => { pararMovimento(); destacar('btn-S'); }, () => removerDestaque('btn-S'));
+ligarBotao('btn-H', ligarBuzina, desligarBuzina);
+
 // =====================================
-// LÓGICA DO TECLADO (W, A, S, D, Espaço para Freio e F para Buzina)
+// TECLADO (W, A, S, D / setas, Espaço para Freio e F para Buzina)
 // =====================================
 const TECLAS_MOVIMENTO = {
     'w': 'F', 'arrowup': 'F',
@@ -691,6 +1075,12 @@ const TECLAS_MOVIMENTO = {
     'a': 'L', 'arrowleft': 'L',
     'd': 'R', 'arrowright': 'R'
 };
+let teclasFisicas = {};   // tecla -> comando, para W e ▲ não brigarem
+
+function recalcularTeclas() {
+    teclasSeguras = new Set(Object.values(teclasFisicas));
+    atualizarMotores();
+}
 
 document.addEventListener('keydown', (e) => {
     let tecla = e.key.toLowerCase();
@@ -701,8 +1091,10 @@ document.addEventListener('keydown', (e) => {
     // (Assim o freio funciona mesmo com a tecla de movimento ainda segura.)
     if (e.repeat) return;
 
-    // Movimento (W, A, S, D ou Setas)
-    if (cmd) segurar('tecla:' + tecla, cmd);
+    if (cmd) {
+        teclasFisicas[tecla] = cmd;
+        recalcularTeclas();
+    }
 
     // Barra de Espaço aciona o FREIO (Stop)
     if (tecla === ' ') {
@@ -717,64 +1109,14 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('keyup', (e) => {
     let tecla = e.key.toLowerCase();
 
-    if (TECLAS_MOVIMENTO[tecla]) soltar('tecla:' + tecla);
+    if (TECLAS_MOVIMENTO[tecla] && tecla in teclasFisicas) {
+        delete teclasFisicas[tecla];
+        recalcularTeclas();
+    }
 
-    // Soltar a barra de espaço remove o destaque do botão de stop
     if (tecla === ' ') removerDestaque('btn-S');
-
-    // Desliga a buzina ao soltar a tecla F
     if (tecla === 'f') desligarBuzina();
 });
-
-function destacar(idElemento) {
-    let el = document.getElementById(idElemento);
-    if(el) el.classList.add('pressionado');
-}
-
-function removerDestaque(idElemento) {
-    let el = document.getElementById(idElemento);
-    if(el) el.classList.remove('pressionado');
-}
-
-function removerDestaqueMovimento() {
-    for (let id of Object.values(BOTAO_DO_MOVIMENTO)) removerDestaque(id);
-}
-
-// =====================================
-// BOTÕES DA TELA (mouse e toque)
-// =====================================
-// Os eventos "pointer" tratam mouse e dedo do mesmo jeito e disparam uma
-// única vez por toque (antes, mousedown + touchstart mandavam o comando 2x).
-function ligarBotao(id, aoPressionar, aoSoltar) {
-    let el = document.getElementById(id);
-    let pressionado = false;
-
-    el.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        // Continua recebendo o "soltar" mesmo se o dedo escorregar para fora do botão
-        el.setPointerCapture(e.pointerId);
-        pressionado = true;
-        aoPressionar();
-    });
-
-    let aoLiberar = () => {
-        if (!pressionado) return; // pointerup e lostpointercapture chegam juntos
-        pressionado = false;
-        aoSoltar();
-    };
-    el.addEventListener('pointerup', aoLiberar);
-    el.addEventListener('pointercancel', aoLiberar);
-    el.addEventListener('lostpointercapture', aoLiberar);
-
-    // Sem menu de contexto ao segurar o botão no celular
-    el.addEventListener('contextmenu', (e) => e.preventDefault());
-}
-
-for (let [cmd, id] of Object.entries(BOTAO_DO_MOVIMENTO)) {
-    ligarBotao(id, () => segurar(id, cmd), () => soltar(id));
-}
-ligarBotao('btn-S', () => { pararMovimento(); destacar('btn-S'); }, () => removerDestaque('btn-S'));
-ligarBotao('btn-H', ligarBuzina, desligarBuzina);
 
     </script>
 </body>

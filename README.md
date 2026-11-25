@@ -1,6 +1,6 @@
 # 🤖 Carrinho RC "Astro" com ESP32
 
-Repositório dedicado ao desenvolvimento do hardware, esquemas elétricos e código de controle do "Astro", um robô móvel de 4 rodas (4WD) baseado em **ESP32 DevKit V1**. O projeto utiliza uma interface web de controle imersiva e conta com uma arquitetura de energia isolada para garantir a estabilidade do microcontrolador e a máxima eficiência dos motores.
+Repositório dedicado ao desenvolvimento do hardware, esquemas elétricos e código de controle do "Astro", um robô móvel de 4 rodas (4WD) baseado em **ESP32 DevKit V1**. O projeto utiliza uma interface web de controle imersiva e é alimentado por uma única bateria de lítio 3S3P, que move os motores e, pelo regulador da ponte H, também alimenta o ESP32.
 
 ---
 
@@ -9,8 +9,8 @@ Repositório dedicado ao desenvolvimento do hardware, esquemas elétricos e cód
 - **Microcontrolador:** ESP32 DevKit V1 (30 pinos)
 - **Tração:** 4x Motores DC robustos projetados para 12V (4WD)
 - **Acionamento de Motores:** 1x Ponte H L298N (controlando os dois lados do chassi)
-- **Alimentação de Potência (Motores):** Pack de 2x Baterias de Lítio em série (7.4V) *— Escalável para 3S (11.1V) futuramente*
-- **Alimentação Lógica (ESP32/Sensores):** 1x Power Bank (via conexão USB)
+- **Alimentação:** 1x Bateria de Lítio 3S3P (9 baterias: 3 em série × 3 em paralelo — 11,1V nominal, 12,6V cheia, ~9V vazia)
+- **Alimentação Lógica (ESP32/Sensores):** regulador de 5V da própria Ponte H L298N
 - **Navegação/Sensores:** 1x Sensor Ultrassônico HC-SR04
 - **Atuador Sonoro:** 1x Buzzer Ativo/Passivo
 - **Outros:** Resistores (1kΩ e 2kΩ) para divisor de tensão, protoboard e jumpers.
@@ -20,12 +20,18 @@ Repositório dedicado ao desenvolvimento do hardware, esquemas elétricos e cód
 ## ⚡ Esquema de Conexão (Pinout) e Energia
 
 ### 1. Arquitetura de Energia e GND Comum
-Para evitar que o ruído e o alto consumo de corrente dos motores reiniciem o ESP32 (especialmente com o Wi-Fi ativo), os circuitos de potência e lógica são separados. **O ponto crítico desta arquitetura é a interligação de todos os GNDs para nivelar a referência elétrica.**
+Uma única bateria 3S3P alimenta tudo: ela vai direto para a ponte H, e o regulador de 5V da ponte H alimenta o ESP32 e os periféricos. **Todos os GNDs estão interligados na mesma trilha.**
 
-- **Alimentação dos Motores:** O polo positivo das baterias de lítio é conectado ao borne **12V** da Ponte H. O polo negativo vai para a **trilha do GND Comum**.
-- **Alimentação Lógica:** O ESP32 é alimentado exclusivamente pelo cabo USB ligado ao **Power Bank**.
-- **Alimentação de Periféricos:** O VCC do Sensor e do Buzzer é derivado do pino VIN/5V do ESP32.
-- **Malha de Terra (GND Comum):** O GND do ESP32, o GND do Power Bank (via placa), o borne GND da Ponte H, o negativo das Baterias de Lítio, e os pinos GND do Sensor e do Buzzer estão unificados na mesma trilha.
+- **Alimentação dos Motores:** O polo positivo da bateria 3S3P é conectado ao borne **12V** da Ponte H. O polo negativo vai para a **trilha do GND Comum**. Descontando a queda de ~2V do L298N, os motores (de 12V) recebem de ~7V a ~10,5V, conforme a carga da bateria.
+- **Alimentação Lógica:** O pino **5V** da Ponte H (saída do regulador 78M05 da placa) é ligado ao pino **VIN** do ESP32. Nunca ligue no pino 3V3.
+- **Alimentação de Periféricos:** O VCC do Sensor e do Buzzer sai da mesma linha de 5V (pino 5V da Ponte H / VIN do ESP32).
+- **Malha de Terra (GND Comum):** O GND do ESP32, o borne GND da Ponte H, o negativo da bateria e os pinos GND do Sensor e do Buzzer estão unificados na mesma trilha.
+
+> **Cuidados com esta ligação:**
+> - O **jumper de 12V** da Ponte H precisa ficar colocado: é ele que liga o regulador de 5V. Sem o jumper, o pino 5V vira entrada e o ESP32 fica sem energia. Com a bateria cheia (12,6V) já está um pouco acima dos 12V recomendados, então **não use 4S** com este esquema.
+> - O regulador da Ponte H aguenta ~500mA e esquenta (o Wi-Fi do ESP32 puxa picos de 250–300mA). Se ele ficar muito quente ou o ESP32 reiniciar sozinho, troque por um regulador step-down (buck) de 5V ligado direto na bateria.
+> - Recomendado: um capacitor eletrolítico de 470–1000µF entre o VIN e o GND do ESP32, para segurar as quedas de tensão quando os motores arrancam.
+> - Para gravar o código pelo USB, desligue a bateria antes (nem toda placa DevKit tem o diodo que protege o computador).
 
 ### 2. Sinais de Controle - Motores (ESP32 para L298N)
 Os motores do lado esquerdo estão ligados em paralelo nas saídas OUT1 e OUT2. Os motores do lado direito estão em paralelo nas saídas OUT3 e OUT4. 
@@ -56,9 +62,10 @@ O controle do Astro é realizado através de uma rede Wi-Fi gerada pelo próprio
 - **Página embutida no código:** o HTML, o CSS e o JS ficam juntos no arquivo `pagina.h`, que é compilado junto com o `astro.ino`. Não é preciso enviar arquivos para o sistema de arquivos do ESP32 (LittleFS).
 - **Fonte editável em `data/`:** os arquivos `index.html`, `style.css` e `script.js` são a versão separada da mesma página, mais fácil de editar. Ao mudar a página, atualize também o `pagina.h`.
 
-- **Parada de Segurança (failsafe):** enquanto um botão de movimento (ou a buzina) está pressionado, a página repete o comando a cada 150ms. Se o ESP32 ficar 500ms sem receber a repetição (Wi-Fi caiu, celular travou, troca de aba), ele para os motores e desliga a buzina sozinho. A página também manda parar ao perder o foco.
+- **Controles analógicos:** o analógico da esquerda é o acelerador (para cima = frente, para baixo = ré) e o da direita é a direção. Quanto mais longe do centro, mais rápido/mais fechada a curva: a página mistura os dois e manda a velocidade de cada lado (`/M?e=<esq>&d=<dir>`, de -1023 a 1023). No computador, W/A/S/D (ou setas) continuam funcionando e dá para combinar (W + D faz curva). O `PWM_MINIMO` no `astro.ino` define a menor força que ainda faz a roda girar.
+- **Parada de Segurança (failsafe):** enquanto o carrinho anda (ou a buzina toca), a página repete o comando a cada 150ms. Se o ESP32 ficar 500ms sem receber a repetição (Wi-Fi caiu, celular travou, troca de aba), ele para os motores e desliga a buzina sozinho. A página também manda parar ao perder o foco.
 - **Dashboard Futurista:** A interface de controle adota uma estética sci-fi/HUD (Heads-Up Display) com esquema de cores neon e escuro, simulando um painel de comando avançado.
-- **Sistema de Marchas (Em Desenvolvimento):** O mapeamento de botões na interface envia parâmetros ao backend em C++, que ajusta o teto do sinal PWM (0-1023, 10 bits). Isso permite alternar entre diferentes "marchas", controlando a potência entregue pela bateria aos motores sem alterar a tensão da fonte.
+- **Velocidade proporcional:** o PWM de cada lado (0-1023, 10 bits) segue o quanto o analógico foi empurrado, então não é preciso um sistema de marchas. Com a bateria 3S, o `PWM_MINIMO` de 400 deve bastar para as rodas saírem do lugar: se o carrinho der tranco com o analógico pouco empurrado, diminua; se as rodas só chiarem, aumente.
 
 ---
 
@@ -80,4 +87,4 @@ carrinho-rc/
         └── data/                       # Fonte editável da página (mesmo conteúdo do pagina.h)
             ├── index.html              # Estrutura do painel de controle (HUD)
             ├── style.css               # Estilização visual futurista
-            └── script.js               # Lógica HTTP, leitura de teclas e botões
+            └── script.js               # Lógica HTTP, analógicos e teclado

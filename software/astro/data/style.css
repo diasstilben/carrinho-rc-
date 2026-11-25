@@ -37,6 +37,7 @@ body {
     justify-content: space-between;
     align-items: center;
     min-height: 100vh;
+    min-height: 100dvh;
     overflow-x: hidden;
     position: relative;
     user-select: none;
@@ -133,15 +134,18 @@ h1 {
 .conectado::before    { animation: pulse-dot 1.4s ease-in-out infinite; }
 .desconectado::before { animation: pulse-dot 0.6s steps(2) infinite; }
 
-/* ================= PAINEL DIRECIONAL ================= */
-.d-pad {
-    --tam: clamp(78px, 22vw, 96px);
+/* ================= CONTROLES ANALÓGICOS ================= */
+.controles {
+    --stick: min(clamp(130px, 30vw, 210px), 52vh);
+    --stick: min(clamp(130px, 30vw, 210px), 52dvh);
+    --botao: clamp(64px, 16vw, 82px);
     display: grid;
-    grid-template-columns: repeat(3, var(--tam));
-    grid-template-rows: repeat(3, var(--tam));
-    gap: 12px;
+    grid-template-columns: auto auto auto;
+    grid-template-areas: "esq centro dir";
+    align-items: center;
     justify-content: center;
-    padding: 26px;
+    gap: 26px;
+    padding: 22px 28px;
     position: relative;
     z-index: 2;
     background:
@@ -155,21 +159,174 @@ h1 {
     touch-action: none;
 }
 
-/* Anel de radar atrás do direcional */
-.d-pad::before {
+.stick-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+.stick-esq { grid-area: esq; }
+.stick-dir { grid-area: dir; }
+
+.stick-rotulo {
+    font-family: var(--font-titulo);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--lime);
+    text-shadow: 0 0 8px rgba(182, 255, 0, 0.6);
+    white-space: nowrap;
+}
+
+.stick-valor {
+    font-family: var(--font-titulo);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    min-width: 6ch;
+    color: var(--cyan);
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.7);
+}
+.stick-valor.re { color: var(--red); text-shadow: 0 0 8px rgba(255, 42, 77, 0.7); }
+
+/* Base do analógico */
+.joystick {
+    position: relative;
+    width: var(--stick);
+    height: var(--stick);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 229, 255, 0.07), rgba(5, 7, 13, 0.92) 72%);
+    border: 1px solid var(--cyan-dim);
+    box-shadow:
+        inset 0 0 30px rgba(0, 0, 0, 0.85),
+        0 0 24px rgba(0, 229, 255, 0.12);
+    touch-action: none;  /* o dedo arrasta o analógico, não a página */
+    cursor: grab;
+    -webkit-touch-callout: none;
+}
+.joystick.ativo { cursor: grabbing; border-color: var(--cyan); }
+
+/* Trilho: mostra para onde a manopla anda */
+.joystick::before {
     content: "";
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 78%;
-    aspect-ratio: 1;
     transform: translate(-50%, -50%);
-    border-radius: 50%;
-    border: 1px dashed rgba(0, 229, 255, 0.22);
-    box-shadow: 0 0 0 14px rgba(0, 229, 255, 0.03), inset 0 0 30px rgba(0, 229, 255, 0.06);
+    border-radius: 999px;
+    border: 1px dashed rgba(0, 229, 255, 0.35);
+    background: rgba(0, 229, 255, 0.05);
     pointer-events: none;
-    animation: girar 40s linear infinite;
 }
+.joystick.vertical::before   { width: 30%; height: 88%; }
+.joystick.horizontal::before { width: 88%; height: 30%; }
+
+/* Anel de radar girando */
+.joystick::after {
+    content: "";
+    position: absolute;
+    inset: 7%;
+    border-radius: 50%;
+    border: 1px dashed rgba(0, 229, 255, 0.16);
+    pointer-events: none;
+    animation: girar-simples 40s linear infinite;
+}
+
+/* Manopla (a "bolinha" que o dedo arrasta) */
+.manopla {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 42%;
+    height: 42%;
+    margin-left: -21%;
+    margin-top: -21%;
+    border-radius: 50%;
+    z-index: 1;
+    pointer-events: none;
+    background: radial-gradient(circle at 40% 35%, #2b3d52, #0d1520 72%);
+    border: 2px solid var(--cyan);
+    box-shadow:
+        0 0 14px rgba(0, 229, 255, 0.45),
+        inset 0 0 14px rgba(0, 229, 255, 0.2),
+        0 6px 14px rgba(0, 0, 0, 0.6);
+    transition: transform 0.15s ease-out, background 0.12s ease, box-shadow 0.12s ease; /* volta suave ao centro */
+}
+/* anel interno (textura de "pegada") */
+.manopla::after {
+    content: "";
+    position: absolute;
+    inset: 22%;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 229, 255, 0.45);
+}
+.joystick.ativo .manopla {
+    transition: none; /* segue o dedo sem atraso */
+    background: radial-gradient(circle at 40% 35%, #19f0ff, #00a9c4 75%);
+    box-shadow:
+        0 0 26px var(--cyan),
+        0 0 50px rgba(0, 229, 255, 0.5),
+        inset 0 0 14px rgba(255, 255, 255, 0.35);
+}
+.joystick.ativo .manopla::after { border-color: rgba(255, 255, 255, 0.7); }
+
+/* Coluna do meio: parar, buzina e telemetria */
+.centro {
+    grid-area: centro;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+}
+.centro .btn {
+    width: var(--botao);
+    height: var(--botao);
+}
+
+.telemetria {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: calc(var(--botao) + 20px);
+}
+.tele-lado {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-titulo);
+    font-size: 10px;
+    font-weight: 700;
+    color: #7fa3b3;
+}
+.barra {
+    position: relative;
+    flex: 1;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--cyan-dim);
+    border-radius: 2px;
+    overflow: hidden;
+}
+/* risco do zero no meio da barra */
+.barra::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(216, 246, 255, 0.5);
+}
+.barra-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    background: var(--cyan);
+    box-shadow: 0 0 6px var(--cyan);
+}
+.barra-fill.re { background: var(--red); box-shadow: 0 0 6px var(--red); }
 
 /* ================= BOTÕES BASE ================= */
 .btn {
@@ -274,8 +431,6 @@ h1 {
 
 /* ================= BOTÃO BUZINA (ALERTA) ================= */
 .buzina {
-    grid-column: 3;
-    grid-row: 1;
     color: #1a0600;
     border: 2px solid var(--orange);
     text-shadow: none;
@@ -326,13 +481,6 @@ h1 {
         0 0 80px rgba(255, 42, 77, 0.8),
         inset 0 0 20px rgba(255, 255, 255, 0.3);
 }
-
-/* ================= POSICIONAMENTO ================= */
-.frente   { grid-column: 2; grid-row: 1; }
-.esquerda { grid-column: 1; grid-row: 2; }
-.parar    { grid-column: 2; grid-row: 2; }
-.direita  { grid-column: 3; grid-row: 2; }
-.tras     { grid-column: 2; grid-row: 3; }
 
 /* ================= LEGENDA DE COMANDOS ================= */
 .painel {
@@ -493,8 +641,48 @@ footer strong { color: var(--cyan); font-weight: 600; }
     *, *::before, *::after { animation: none !important; }
 }
 
-/* Telas muito pequenas */
-@media (max-width: 380px) {
-    .d-pad { padding: 18px; gap: 9px; }
-    .btn { font-size: 13px; }
+/* Celular em pé: parar/buzina em cima, um analógico em cada polegar embaixo */
+@media (max-width: 640px) {
+    .controles {
+        --stick: min(37vw, 190px);
+        --botao: 62px;
+        grid-template-columns: auto auto;
+        grid-template-areas:
+            "centro centro"
+            "esq    dir";
+        gap: 18px 14px;
+        padding: 18px 16px;
+    }
+    .centro { flex-direction: row; gap: 16px; }
+    .telemetria { width: 90px; }
+    .stick-rotulo { letter-spacing: 2px; }
+}
+
+/* Celular estreito (iPhone SE, Androids pequenos) */
+@media (max-width: 360px) {
+    .controles { --stick: min(38vw, 150px); --botao: 56px; gap: 16px 10px; padding: 16px 12px; }
+    .stick-rotulo { font-size: 10px; letter-spacing: 1px; }
+    .status-box { padding: 8px 14px; font-size: 13px; letter-spacing: 1px; }
+}
+
+/* Celular deitado: tela baixa, então encolhe o cabeçalho */
+@media (max-height: 500px) and (orientation: landscape) {
+    body { padding: 10px; }
+    .hud-tag { display: none; }
+    h1 { font-size: 24px; margin-bottom: 6px; }
+    .status-box { margin-bottom: 12px; padding: 6px 16px; font-size: 13px; }
+    footer { margin-top: 14px; }
+    .controles {
+        --stick: min(30vw, calc(100vh - 185px));
+        --stick: min(30vw, calc(100dvh - 185px)); /* desconta a barra de endereço */
+        --botao: 54px;
+        padding: 14px 28px;
+    }
+    .centro { gap: 10px; }
+    .stick-area { gap: 6px; }
+}
+
+/* Só toque (sem teclado/mouse): a legenda de teclas não serve, esconde */
+@media (hover: none) and (pointer: coarse) {
+    .legenda { display: none; }
 }

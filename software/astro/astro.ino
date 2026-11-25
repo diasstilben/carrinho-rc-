@@ -40,7 +40,7 @@ int estadoBuzinaRe = LOW;
 // ==========================================
 // PARADA DE SEGURANÇA (failsafe)
 // ==========================================
-// Enquanto um botão está pressionado, a página repete o comando a cada 150ms.
+// Enquanto o carrinho anda, a página repete o comando a cada 150ms.
 // Se o ESP ficar TEMPO_LIMITE_MS sem receber a repetição (Wi-Fi caiu, celular
 // travou, aba fechada...), ele para os motores / desliga a buzina sozinho.
 const unsigned long TEMPO_LIMITE_MS = 500;
@@ -72,21 +72,32 @@ void configurarPinos() {
     parar(); // Garante que o robô inicie parado
 }
 
-// Função base para acionar a ponte H (Adaptada para 1 Ponte H)
-void moverMotores(int v1, int v2, int v3, int v4, int val_pwm) {
-    digitalWrite(IN1, v1); digitalWrite(IN2, v2);
-    digitalWrite(IN3, v3); digitalWrite(IN4, v4);
+// PWM mínimo que de fato faz a roda girar. Abaixo disso o motor DC só chia e
+// esquenta sem sair do lugar, então o curso do analógico começa daqui.
+// Se o carrinho não andar com o analógico pouco empurrado, aumente; se ele
+// já sair rápido demais, diminua.
+const int PWM_MINIMO = 400;
 
-    // Aplica a velocidade (PWM) em ambos os lados
-    ledcWrite(ENA, val_pwm); ledcWrite(ENB, val_pwm);
+// Aciona UM lado da ponte H com velocidade proporcional.
+// velocidade: -1023 (ré total) .. 0 (parado) .. 1023 (frente total)
+void acionarLado(int pinoA, int pinoB, int pinoEN, int velocidade) {
+    velocidade = constrain(velocidade, -1023, 1023);
+    if (velocidade == 0) {
+        digitalWrite(pinoA, LOW); digitalWrite(pinoB, LOW);
+        ledcWrite(pinoEN, 0);
+        return;
+    }
+    digitalWrite(pinoA, velocidade > 0 ? HIGH : LOW);
+    digitalWrite(pinoB, velocidade > 0 ? LOW : HIGH);
+    ledcWrite(pinoEN, map(abs(velocidade), 1, 1023, PWM_MINIMO, 1023));
 }
 
-// Comandos de Movimento
-void parar()    { moverMotores(0, 0, 0, 0, 0); }
-void frente()   { moverMotores(1, 0, 1, 0, 1023); }
-void tras()     { moverMotores(0, 1, 0, 1, 1023); }
-void esquerda() { moverMotores(0, 1, 1, 0, 1023); } 
-void direita()  { moverMotores(1, 0, 0, 1, 1023); }
+// Comandos de Movimento (Canal A = lado esquerdo, Canal B = lado direito)
+void moverMotores(int velEsquerda, int velDireita) {
+    acionarLado(IN1, IN2, ENA, velEsquerda);
+    acionarLado(IN3, IN4, ENB, velDireita);
+}
+void parar() { moverMotores(0, 0); }
 
 // ==========================================
 // 3. SENSOR DE RÉ
@@ -147,11 +158,23 @@ void setup() {
     server.on("/", HTTP_GET, []() { server.send(200, "text/html", index_html); });
     server.on("/index.html", HTTP_GET, []() { server.send(200, "text/html", index_html); });
 
-    // Rotas de Comandos Motores e Buzina 
-    server.on("/B", []() { emRe = true; tras(); manterMotores(); server.send(200); }); // Ativa a ré
-    server.on("/F", []() { desativarAlarmeRe(); frente(); manterMotores(); server.send(200); });
-    server.on("/L", []() { desativarAlarmeRe(); esquerda(); manterMotores(); server.send(200); });
-    server.on("/R", []() { desativarAlarmeRe(); direita(); manterMotores(); server.send(200); });
+    // Rotas de Comandos Motores e Buzina
+    // /M?e=<esquerda>&d=<direita>: velocidade de cada lado, de -1023 a 1023,
+    // já misturada pela página a partir dos analógicos (acelerador + direção)
+    server.on("/M", []() {
+        int esq = constrain(server.arg("e").toInt(), -1023, 1023);
+        int dir = constrain(server.arg("d").toInt(), -1023, 1023);
+        if (esq == 0 && dir == 0) {
+            pararTudo();
+        } else {
+            // Alarme de ré só quando o carrinho, no geral, está indo para trás
+            if (esq + dir < 0) emRe = true;
+            else desativarAlarmeRe();
+            moverMotores(esq, dir);
+            manterMotores();
+        }
+        server.send(200);
+    });
     server.on("/S", []() { pararTudo(); server.send(200); });
     server.on("/H", []() {
         digitalWrite(BUZINA_PIN, HIGH);
