@@ -149,6 +149,9 @@ function mostrarTelemetria(r) {
 function criarAnalogico(id, eixo, aoMover) {
     let base = document.getElementById(id);
     let manopla = base.querySelector('.manopla');
+    // Área de toque: a coluna inteira (rótulo + analógico + valor), não só o
+    // círculo, para o polegar não "errar" o analógico no celular
+    let zona = base.closest('.stick-area');
     let dedo = null;
 
     function curso() {
@@ -162,14 +165,14 @@ function criarAnalogico(id, eixo, aoMover) {
 
     function mover(e) {
         let r = base.getBoundingClientRect();
-        let c = curso();
+        // 100% é com o dedo perto da borda do círculo: curso maior = controle mais fino
+        let alcance = r.width * 0.42;
         let d = eixo === 'y'
             ? e.clientY - (r.top + r.height / 2)
             : e.clientX - (r.left + r.width / 2);
-        d = Math.max(-c, Math.min(c, d));
-        posicionar(d);
+        let v = Math.max(-1, Math.min(1, d / alcance));   // -1..1
+        posicionar(v * curso());
 
-        let v = d / c;   // -1..1
         if (Math.abs(v) < ZONA_MORTA) v = 0;
         else v = Math.sign(v) * (Math.abs(v) - ZONA_MORTA) / (1 - ZONA_MORTA);
         aoMover(eixo === 'y' ? -v : v);   // para cima = frente
@@ -177,30 +180,30 @@ function criarAnalogico(id, eixo, aoMover) {
 
     function soltar() {
         if (dedo === null) return;
-        if (base.hasPointerCapture(dedo)) base.releasePointerCapture(dedo);
+        if (zona.hasPointerCapture(dedo)) zona.releasePointerCapture(dedo);
         dedo = null;
         base.classList.remove('ativo');
         posicionar(0);   // volta ao centro (a transição do CSS deixa suave)
         aoMover(0);
     }
 
-    base.addEventListener('pointerdown', (e) => {
+    zona.addEventListener('pointerdown', (e) => {
         if (dedo !== null) return;   // já tem um dedo nesse analógico
         e.preventDefault();
         dedo = e.pointerId;
-        // Continua recebendo o movimento mesmo se o dedo sair da base
-        base.setPointerCapture(dedo);
+        // Continua recebendo o movimento mesmo se o dedo sair da área
+        zona.setPointerCapture(dedo);
         base.classList.add('ativo');
         mover(e);
     });
-    base.addEventListener('pointermove', (e) => {
+    zona.addEventListener('pointermove', (e) => {
         if (e.pointerId === dedo) mover(e);
     });
     let fim = (e) => { if (e.pointerId === dedo) soltar(); };
-    base.addEventListener('pointerup', fim);
-    base.addEventListener('pointercancel', fim);
-    base.addEventListener('lostpointercapture', fim);
-    base.addEventListener('contextmenu', (e) => e.preventDefault());
+    zona.addEventListener('pointerup', fim);
+    zona.addEventListener('pointercancel', fim);
+    zona.addEventListener('lostpointercapture', fim);
+    zona.addEventListener('contextmenu', (e) => e.preventDefault());
 
     return {
         soltar,

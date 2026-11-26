@@ -14,12 +14,12 @@ WebServer server(80);
 // ==========================================
 // 2. CONFIGURAÇÃO DOS PINOS E MOTORES (UMA PONTE H)
 // ==========================================
-// Canal A (Motores do Lado Esquerdo)
+// Canal A (hoje move o lado direito: ver CORRIGIR_FRENTE_RE)
 const int ENA = 13;
 const int IN1 = 14;
 const int IN2 = 27;
 
-// Canal B (Motores do Lado Direito)
+// Canal B (hoje move o lado esquerdo: ver CORRIGIR_FRENTE_RE)
 const int IN3 = 26;
 const int IN4 = 25;
 const int ENB = 33;
@@ -27,15 +27,11 @@ const int ENB = 33;
 // Pino da Buzina
 const int BUZINA_PIN = 23;
 
-// Pinos do Sensor
+// Pinos do Sensor Ultrassônico (HC-SR04)
+// O alarme de ré foi retirado; os pinos continuam ligados e reservados
+// para um uso futuro do sensor.
 const int TRIG_PIN = 4;
-const int ECHO_PIN = 35; 
-
-// Variáveis para o controle do sensor de ré 
-bool emRe = false;
-bool buzinaReAtiva = false;
-unsigned long ultimoTempoBip = 0;
-int estadoBuzinaRe = LOW;
+const int ECHO_PIN = 35;
 
 // ==========================================
 // PARADA DE SEGURANÇA (failsafe)
@@ -61,8 +57,9 @@ void configurarPinos() {
     pinMode(BUZINA_PIN, OUTPUT);
     digitalWrite(BUZINA_PIN, LOW);
 
-    // Configura os pinos do Sensor Ultrassônico
+    // Pinos do Sensor Ultrassônico (reservados): Trig fica em LOW, parado
     pinMode(TRIG_PIN, OUTPUT);
+    digitalWrite(TRIG_PIN, LOW);
     pinMode(ECHO_PIN, INPUT);
 
     // Configura o PWM para o controle de velocidade (1000 Hz, 10 bits = 0 a 1023)
@@ -92,37 +89,25 @@ void acionarLado(int pinoA, int pinoB, int pinoEN, int velocidade) {
     ledcWrite(pinoEN, map(abs(velocidade), 1, 1023, PWM_MINIMO, 1023));
 }
 
-// Comandos de Movimento (Canal A = lado esquerdo, Canal B = lado direito)
+// Comandos de Movimento
+// Ajuste de fiação: no carrinho montado, os lados (virar) estavam certos, mas
+// frente e ré saíam trocadas. Inverter só a polaridade dos motores trocaria
+// também esquerda/direita, então a correção é trocar os canais E inverter os
+// dois: o canal B leva o lado esquerdo e o canal A o direito, ambos com o
+// sentido invertido (é como se a frente do chassi fosse o outro lado).
+// Se um dia refizer a fiação e frente/ré voltarem a sair trocadas, mude para false.
+const bool CORRIGIR_FRENTE_RE = true;
+
 void moverMotores(int velEsquerda, int velDireita) {
-    acionarLado(IN1, IN2, ENA, velEsquerda);
-    acionarLado(IN3, IN4, ENB, velDireita);
-}
-void parar() { moverMotores(0, 0); }
-
-// ==========================================
-// 3. SENSOR DE RÉ
-// ==========================================
-long medirDistancia() {
-    digitalWrite(TRIG_PIN, LOW);
-    delayMicroseconds(2);
-    digitalWrite(TRIG_PIN, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(TRIG_PIN, LOW);
-
-    // Timeout de 30ms (~5 metros no máximo) para não travar o código
-    long duracao = pulseIn(ECHO_PIN, HIGH, 30000); 
-    
-    if (duracao == 0) return 999; // Se não ler nada, assume que tá livre
-    return (duracao / 2) / 29.1;  // Converte o tempo do eco para centímetros
-}
-
-void desativarAlarmeRe() {
-    emRe = false;
-    if (buzinaReAtiva) { // Desliga a buzina de ré só se ela estiver apitando
-        digitalWrite(BUZINA_PIN, LOW);
-        buzinaReAtiva = false;
+    if (CORRIGIR_FRENTE_RE) {
+        acionarLado(IN1, IN2, ENA, -velDireita);
+        acionarLado(IN3, IN4, ENB, -velEsquerda);
+    } else {
+        acionarLado(IN1, IN2, ENA, velEsquerda);
+        acionarLado(IN3, IN4, ENB, velDireita);
     }
 }
+void parar() { moverMotores(0, 0); }
 
 // Chamado a cada comando de movimento: marca que os motores estão ligados
 // e renova o prazo do failsafe
@@ -132,13 +117,12 @@ void manterMotores() {
 }
 
 void pararTudo() {
-    desativarAlarmeRe();
     parar();
     motoresAtivos = false;
 }
 
 // ==========================================
-// 4. SETUP INICIAL DO SISTEMA
+// 3. SETUP INICIAL DO SISTEMA
 // ==========================================
 void setup() {
     Serial.begin(115200);
@@ -167,9 +151,6 @@ void setup() {
         if (esq == 0 && dir == 0) {
             pararTudo();
         } else {
-            // Alarme de ré só quando o carrinho, no geral, está indo para trás
-            if (esq + dir < 0) emRe = true;
-            else desativarAlarmeRe();
             moverMotores(esq, dir);
             manterMotores();
         }
@@ -192,7 +173,7 @@ void setup() {
 }
 
 // ==========================================
-// 5. LOOP PRINCIPAL
+// 4. LOOP PRINCIPAL
 // ==========================================
 void loop() { 
     server.handleClient(); // Continua ouvindo o navegador rapidamente
@@ -207,35 +188,5 @@ void loop() {
         digitalWrite(BUZINA_PIN, LOW);
         buzinaManual = false;
         Serial.println("Failsafe: buzina desligada.");
-    }
-
-    // Lógica do Sensor de Ré
-    if (emRe) {
-        long distancia = medirDistancia();
-        int intervaloBip = 0;
-
-        if (distancia < 15) {
-            intervaloBip = 100; // Menos de 15cm: Bipe muito rápido (cuidado!)
-        } else if (distancia < 30) {
-            intervaloBip = 300; // Menos de 30cm: Bipe médio
-        } else if (distancia < 60) {
-            intervaloBip = 600; // Menos de 60cm: Bipe lento
-        } else {
-            intervaloBip = 0;   // Mais de 60cm: Muito longe, não apita
-            if (buzinaReAtiva) {
-                digitalWrite(BUZINA_PIN, LOW);
-                buzinaReAtiva = false;
-            }
-        }
-
-        // Toca o bipe no ritmo certo sem usar delay()
-        if (intervaloBip > 0) {
-            buzinaReAtiva = true;
-            if (millis() - ultimoTempoBip >= intervaloBip) {
-                ultimoTempoBip = millis(); // Reseta o cronômetro
-                estadoBuzinaRe = (estadoBuzinaRe == LOW) ? HIGH : LOW; // Inverte o estado
-                digitalWrite(BUZINA_PIN, estadoBuzinaRe);
-            }
-        }
     }
 }
